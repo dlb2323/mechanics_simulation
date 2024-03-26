@@ -14,13 +14,19 @@ add_subdirectory(src)
 #[[ set(GLFW_BUILD_WAYLAND ON) ]]
 add_subdirectory(glfw)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC 
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
+    iostream
     )
 
-target_include_directories(${PROJECT_NAME} PUBLIC
-    m # project
+message("${CMAKE_CXX_COMPILER}../../include/c++")
+
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    # project
     "${PROJECT_BINARY_DIR}"
     "${PROJECT_SOURCE_DIR}/glfw/include" # glfw
+    "${CMAKE_CXX_COMPILER}/../../current/include/c++"
     )
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
