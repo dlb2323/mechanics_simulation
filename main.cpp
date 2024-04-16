@@ -3,7 +3,7 @@
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
 
-#include "src/window.h"
+#include "src/window.hpp"
 
 int main() {
 	if (!glfwInit())

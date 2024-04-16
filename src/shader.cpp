@@ -1,3 +1,4 @@
+#include "shader.hpp"
   /* create shader program */
 const unsigned int shader_program = glCreateProgram();
 {
