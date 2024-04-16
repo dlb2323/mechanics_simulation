@@ -3,6 +3,11 @@
 
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
+#include "glad/glad.h"
+
+static void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+  glViewport(0, 0, width, height);
+}
 
 class window {
 	GLFWwindow *window_id;
