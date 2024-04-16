@@ -7,7 +7,7 @@
 #include <fstream>
 #include <iostream>
 
-std::string read_file(std::string path) {
+static std::string read_file(std::string path) {
   std::string data = "test";
   std::ifstream file;
   file.open(path, std::ios::binary);
@@ -19,7 +19,7 @@ std::string read_file(std::string path) {
   return data;
 }
 
-const unsigned int load_shader(std::string source_path,
+static const unsigned int load_shader(std::string source_path,
                                const unsigned int shader_object) {
   const char *shader_source = read_file(source_path).c_str();
   glShaderSource(shader_object, 1, (const GLchar *const *)&shader_source, NULL);
