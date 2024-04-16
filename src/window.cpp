@@ -15,3 +15,7 @@ void window::makeCurrent() {
 bool window::shouldClose() {
 	return (bool)glfwWindowShouldClose(window_id);
 }
+
+GLFWwindow* window::getWindow() {
+	return window_id;
+}
