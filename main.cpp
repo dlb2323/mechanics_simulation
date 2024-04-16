@@ -1,5 +1,6 @@
 #include <iostream>
 #include "GLFW/glfw3.h"
+#include "glad/glad.h"
 
 class window {
 	GLFWwindow *window_id;
@@ -12,10 +13,21 @@ class window {
 		window_id = glfwCreateWindow(size_x, size_y, name, NULL, NULL);
 	}
 
+	bool exists();
 	void makeCurrent();
 	bool shouldClose();
+	void swapBuffers();
+
 
 };
+
+void window::swapBuffers() {
+	glfwSwapBuffers(window_id);
+}
+
+bool window::exists() {
+	return (bool)window_id;
+}
 
 void window::makeCurrent() {
 	glfwMakeContextCurrent(window_id);
@@ -32,14 +44,18 @@ int main() {
 	window mainWindow("mechanics_simulation", 900, 900);
 	mainWindow.makeCurrent();
 
-	/* if (!window) {
+	if (!mainWindow.exists()) {
 		glfwTerminate();
 		return -1; // terminate glfw and exit system 
 	} else {
 		// glfwSetCursorPosCallback(window, mouse_callback);
-	} */
+	} 
 
 	while(!mainWindow.shouldClose()) {
+	    
+	    glClearColor(0.2, 0.3, 0.3, 1.0);	
+	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	    mainWindow.swapBuffers();
 	    glfwPollEvents();
 	}
 
