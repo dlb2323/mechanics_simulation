@@ -36,26 +36,26 @@ static void gen_sphere(unsigned int nodes) {
 }
 
 class vertexObject {
-  shader* shader_id;
-  unsigned int VBO;
-  unsigned int EBO;
+  shader* m_shader;
+  unsigned int m_VBO;
+  unsigned int m_EBO;
+public:
+  vertexObject(shader* s) : m_shader(s) {
+	glGenBuffers(1, &m_VBO);
+	glGenBuffers(1, &m_EBO);
+  }
+  void set_shader(shader* s);
   void bindVertexArray();
   void bindElementArray();
-public:
-  vertexObject() {
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-  }
-  void bufferData();
 };
 
-class sphere : vertexObject {
-  float radius;
+class sphere {
+  vertexObject* m_vObj;
+  float m_radius;
 public:
-  sphere() {
-
+  sphere(vertexObject* vObj) : m_vObj(vObj) {
   }
+  void bufferData(void* vboData, int vboCount, void* eboData, int eboCount);
 };
 
 #endif // !SPHERE_H
