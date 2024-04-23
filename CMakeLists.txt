@@ -9,6 +9,7 @@ set(GLFW_BUILD_WAYLAND ON)
 
 add_subdirectory(glad)
 add_subdirectory(glfw)
+add_subdirectory(glm)
 add_subdirectory(src)
 
 
@@ -16,10 +17,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     "${PROJECT_BINARY_DIR}"
     "${PROJECT_SOURCE_DIR}/glfw/include"
     "${PROJECT_SOURCE_DIR}/glad/include"
+    "${PROJECT_SOURCE_DIR}/glm"
     "${PROJECT_SOURCE_DIR}/src"
     )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     glfw
     glad
+    glm
     )
