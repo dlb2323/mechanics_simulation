@@ -7,6 +7,5 @@ out vec4 vertexColor;
 
 void main()
 {
-    gl_Position= u_mvp * position;
-    vertexColor = gl_Position;
+    gl_Position= position;
 }
