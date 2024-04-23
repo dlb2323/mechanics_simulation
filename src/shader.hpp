@@ -37,24 +37,24 @@ static const unsigned int load_shader(std::string source_path,
 }
 
 class shader {
-  const unsigned int shader_program;
+  const unsigned int m_program;
 
 public:
-  shader(std::string vertex_path, std::string fragment_path) : shader_program(glCreateProgram()) {
+  shader(std::string vertex_path, std::string fragment_path) : m_program(glCreateProgram()) {
     /* create and link vertex and fragment shaders */
 
     const unsigned int vertex_shader = load_shader(vertex_path, glCreateShader(GL_VERTEX_SHADER));
     const unsigned int fragment_shader = load_shader(fragment_path, glCreateShader(GL_FRAGMENT_SHADER));
 
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
-    glLinkProgram(shader_program);
+    glAttachShader(m_program, vertex_shader);
+    glAttachShader(m_program, fragment_shader);
+    glLinkProgram(m_program);
     /* handle linking errors */
     int success;
     char info_log[512];
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
+    glGetProgramiv(m_program, GL_LINK_STATUS, &success);
     if (!success) {
-      glGetProgramInfoLog(shader_program, 512, NULL, info_log);
+      glGetProgramInfoLog(m_program, 512, NULL, info_log);
       std::cerr << "[ERROR] LINKING SHADER PROGRAM FAILED\n" << info_log;
     }
     /* delete used shader objects */
