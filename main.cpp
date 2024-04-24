@@ -1,15 +1,19 @@
 #include <iostream>
 #define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
-#include "glad/glad.h"
-
-#include "src/shader.hpp"
-#include "src/sphere.hpp"
-#include "src/window.hpp"
+#include <GLFW/glfw3.h>
+#include <glad/glad.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "imgui.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
+
+#include "src/shader.hpp"
+#include "src/sphere.hpp"
+#include "src/window.hpp"
 
 // gen sphere
 // gl stuff
@@ -112,6 +116,7 @@ int main() {
     glfwTerminate();
     exit(EXIT_FAILURE);
   }
+  // opengl setup
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
   glEnable(GL_DEPTH_TEST);
@@ -130,7 +135,21 @@ int main() {
     glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR,
                           GL_DEBUG_SEVERITY_HIGH, 0, nullptr, GL_TRUE);
   }
+  // end
 
+  // Setup Dear ImGui context
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO& io = ImGui::GetIO();
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+#ifdef IMGUI_DOCKING_BRANCH
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+#endif // !IMGUI_DOCKING_BRANCH
+
+  // Setup Platform/Renderer backends
+  ImGui_ImplGlfw_InitForOpenGL(mainWindow.getWindow(), true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+  ImGui_ImplOpenGL3_Init();
   // end
 
   int nodes = 120;
@@ -146,6 +165,12 @@ int main() {
     if (glfwGetKey(mainWindow.getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
       glfwSetWindowShouldClose(mainWindow.getWindow(), GLFW_TRUE);
     }
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    ImGui::ShowDemoWindow(); // Show demo window! :)
+    
     glClearColor(0.2, 0.3, 0.3, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -175,12 +200,18 @@ int main() {
     // glDrawElements(GL_TRIANGLES,
     // (int)((sin(glfwGetTime()/12)+1)/2*nodes*nodes*6), GL_UNSIGNED_INT, 0);
     sphere_object.unbind();
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     mainWindow.swapBuffers();
     glfwPollEvents();
 
     glGetError();
   }
+
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
 
   glfwTerminate();
   exit(EXIT_SUCCESS);
