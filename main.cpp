@@ -142,10 +142,28 @@ int main() {
   sphere_object.set_elements(sphere::gen_vertex_data(nodes, sphere_object));
   sphere test(&sphere_object, 5);
 
+  const float fixed_delta = 0.04f;
+  const float speed = 12.0f
+  glm::mat4 view = glm::mat4(1.0f);
+  view = glm::translate(view, glm::vec3(-20.0f, -20.0f, -100.0f));
+
   while (!mainWindow.shouldClose()) {
     if (glfwGetKey(mainWindow.getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
       glfwSetWindowShouldClose(mainWindow.getWindow(), GLFW_TRUE);
     }
+    if (glfwGetKey(mainWindow.getWindow(), GLFW_KEY_A) == GLFW_PRESS) {
+      view = glm::translate(view, speed*fixed_delta*glm::vec3(1.0f, 0.0f, 0.0f));
+    }
+    if (glfwGetKey(mainWindow.getWindow(), GLFW_KEY_D) == GLFW_PRESS) {
+      view = glm::translate(view, speed*fixed_delta*glm::vec3(-1.0f, 0.0f, 0.0f));
+    }
+    if (glfwGetKey(mainWindow.getWindow(), GLFW_KEY_W) == GLFW_PRESS) {
+      view = glm::translate(view, speed*fixed_delta*glm::vec3(0.0f, -1.0f, 0.0f));
+    }
+    if (glfwGetKey(mainWindow.getWindow(), GLFW_KEY_S) == GLFW_PRESS) {
+      view = glm::translate(view, speed*fixed_delta*glm::vec3(0.0f, 1.0f, 0.0f));
+    }
+
     glClearColor(0.2, 0.3, 0.3, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -155,8 +173,6 @@ int main() {
     // draw
     glm::mat4 proj = glm::perspective((float)(M_PI / 4), (float)width / height,
                                       0.1f, 100.0f);
-    glm::mat4 view = glm::mat4(1.0f);
-    view = glm::translate(view, glm::vec3(-20.0f, -20.0f, -100.0f));
     sphere_object.bind();
     for (int i = 0; i < 30; i++) {
       for (int j = 0; j < 30; j++) {
