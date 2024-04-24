@@ -10,7 +10,7 @@
 static std::string read_file(std::string path) {
   std::string data = "test";
   std::ifstream file;
-  file.open(path, std::ios::binary);
+  file.open(path, std::ios_base::out | std::ios_base::binary);
   if (file.is_open()) {
     data.assign((std::istreambuf_iterator<char>(file)),
                 (std::istreambuf_iterator<char>()));
@@ -21,8 +21,9 @@ static std::string read_file(std::string path) {
 
 static const unsigned int load_shader(std::string source_path,
                                const unsigned int shader_object) {
-  const char *shader_source = read_file(source_path).c_str();
-  glShaderSource(shader_object, 1, (const GLchar *const *)&shader_source, NULL);
+  std::string shader_source = read_file(source_path);
+  const char *p_shader_source = shader_source.c_str();
+  glShaderSource(shader_object, 1, (const GLchar *const *)&p_shader_source, NULL);
   glCompileShader(shader_object);
 
   /* check for compilation errors  */
