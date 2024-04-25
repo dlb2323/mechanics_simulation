@@ -104,11 +104,125 @@ void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id,
   std::cin.get();
 }
 
+class environment {
+    glm::mat4 proj;  
+  environment(int width, int height) : proj(glm::perspective((float)(M_PI / 4), (float)width / height,
+                                      0.1f, 100.0f)) {
+}
+  void draw();
+};
+
+void environment::draw() {
+}
+
+class GUI {
+  static int help_count;
+public:
+  GUI() {}
+  static void show();
+  static void help();
+};
+
+void GUI::show() {
+    help_count = 0;
+    // Demonstrate the various window flags. Typically you would just use the default!
+    static bool no_titlebar = false;
+    static bool no_scrollbar = false;
+    static bool no_menu = false;
+    static bool no_move = true;
+    static bool no_resize = true;
+    static bool no_collapse = true;
+    static bool no_close = false;
+    static bool no_nav = false;
+    static bool no_background = false;
+    static bool no_bring_to_front = false;
+    static bool unsaved_document = false;
+
+    ImGuiWindowFlags window_flags = 0;
+    if (no_titlebar)        window_flags |= ImGuiWindowFlags_NoTitleBar;
+    if (no_scrollbar)       window_flags |= ImGuiWindowFlags_NoScrollbar;
+    if (!no_menu)           window_flags |= ImGuiWindowFlags_MenuBar;
+    if (no_move)            window_flags |= ImGuiWindowFlags_NoMove;
+    if (no_resize)          window_flags |= ImGuiWindowFlags_NoResize;
+    if (no_collapse)        window_flags |= ImGuiWindowFlags_NoCollapse;
+    if (no_nav)             window_flags |= ImGuiWindowFlags_NoNav;
+    if (no_background)      window_flags |= ImGuiWindowFlags_NoBackground;
+    if (no_bring_to_front)  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+    if (unsaved_document)   window_flags |= ImGuiWindowFlags_UnsavedDocument;
+    // We specify a default position/size in case there's no data in the .ini file.
+    // We only do it to make the demo applications a little more welcoming, but typically this isn't required.
+    const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(400, 800), ImGuiCond_Once);
+
+    // Main body of the Demo window starts here.
+    if (!ImGui::Begin("Mechanics Simulation Window", NULL, window_flags))
+    {
+        // Early out if the window is collapsed, as an optimization.
+        ImGui::End();
+        return;
+    }
+
+    ImGui::Text("dear imgui says hello! (%s) (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
+    ImGui::Spacing();
+    {
+        static int clicked = 0;
+        if (ImGui::Button("Button"))
+            clicked++;
+        if (clicked & 1)
+        {
+            ImGui::SameLine();
+            ImGui::Text("Thanks for clicking me!");
+        }
+    }
+    ImGui::Spacing();
+    {
+        static int clicked = 0;
+        if (ImGui::Button("Button"))
+            clicked++;
+        if (clicked & 1)
+        {
+            ImGui::SameLine();
+            ImGui::Text("Thanks for clicking me!");
+        }
+    }
+    ImGui::Spacing();
+    
+    GUI::help();
+
+    ImGui::End();
+}
+
+void GUI::help() {
+    if (ImGui::CollapsingHeader("Help"))
+    {
+        ImGui::SeparatorText("ABOUT THIS DEMO:");
+        ImGui::BulletText("Sections below are demonstrating many aspects of the library.");
+        ImGui::BulletText("The \"Examples\" menu above leads to more demo contents.");
+        ImGui::BulletText("The \"Tools\" menu above gives access to: About Box, Style Editor,\n"
+                          "and Metrics/Debugger (general purpose Dear ImGui debugging tool).");
+
+        ImGui::SeparatorText("PROGRAMMER GUIDE:");
+        ImGui::BulletText("See the ShowDemoWindow() code in imgui_demo.cpp. <- you are here!");
+        ImGui::BulletText("See comments in imgui.cpp.");
+        ImGui::BulletText("See example applications in the examples/ folder.");
+        ImGui::BulletText("Read the FAQ at https://www.dearimgui.com/faq/");
+        ImGui::BulletText("Set 'io.ConfigFlags |= NavEnableKeyboard' for keyboard controls.");
+        ImGui::BulletText("Set 'io.ConfigFlags |= NavEnableGamepad' for gamepad controls.");
+
+        ImGui::SeparatorText("USER GUIDE:");
+        ImGui::ShowUserGuide();
+    }
+}
+
+
+
+
 int main() {
   if (!glfwInit())
     exit(EXIT_FAILURE);
 
-  window mainWindow(std::string("mechanics_simulation"), 900, 900);
+  window mainWindow(std::string("mechanics_simulation"), 1200, 800);
   mainWindow.makeCurrent();
   glfwSetErrorCallback(error_callback);
 
@@ -158,7 +272,7 @@ int main() {
   const unsigned int time_location =
       sphere_shader.get_uniform_location("u_time");
   vertexObject sphere_object(&sphere_shader);
-  sphere_object.set_elements(sphere::gen_vertex_data(nodes, sphere_object));
+  sphere::gen_vertex_data(nodes, sphere_object);
   sphere test(&sphere_object, 5);
 
   while (!mainWindow.shouldClose()) {
@@ -170,6 +284,7 @@ int main() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGui::ShowDemoWindow(); // Show demo window! :)
+    GUI::show();
     
     glClearColor(0.2, 0.3, 0.3, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -197,16 +312,14 @@ int main() {
         sphere_object.draw();
       }
     }
-    // glDrawElements(GL_TRIANGLES,
-    // (int)((sin(glfwGetTime()/12)+1)/2*nodes*nodes*6), GL_UNSIGNED_INT, 0);
     sphere_object.unbind();
+
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     mainWindow.swapBuffers();
     glfwPollEvents();
-
-    glGetError();
   }
 
   ImGui_ImplOpenGL3_Shutdown();

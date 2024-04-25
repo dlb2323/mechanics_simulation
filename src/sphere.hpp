@@ -34,7 +34,7 @@ class sphere {
   vertexObject *m_vObj;
 public:
   const float m_radius;
-  static unsigned int gen_vertex_data(unsigned int nodes, vertexObject& vObj);
+  static void gen_vertex_data(unsigned int nodes, vertexObject& vObj);
   sphere(vertexObject *vObj, float radius) : m_vObj(vObj), m_radius(radius) {}
 };
 

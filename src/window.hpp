@@ -18,7 +18,8 @@ class window {
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);  
+		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);  
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);  
 		window_id = glfwCreateWindow(size_x, size_y, name.c_str(), NULL, NULL);
 	}
 

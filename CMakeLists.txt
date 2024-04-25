@@ -31,6 +31,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 # imgui
 set(IMGUI_SOURCES
     imgui/backends/imgui_impl_glfw.h
+    imgui/backends/imgui_impl_glfw.cpp
     imgui/backends/imgui_impl_opengl3.cpp
     imgui/backends/imgui_impl_opengl3.h
     imgui/backends/imgui_impl_opengl3_loader.h
