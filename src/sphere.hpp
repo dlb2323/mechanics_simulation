@@ -3,7 +3,9 @@
 
 #include "shader.hpp"
 
-class vertexObject {
+#include <glm/vec3.hpp>
+
+class mesh {
   shader *m_shader;
   unsigned int m_VAO;
   unsigned int m_VBO;
@@ -11,12 +13,12 @@ class vertexObject {
   unsigned int m_elements;
 
 public:
-  vertexObject(shader *s) : m_shader(s) {
+  mesh(shader *s) : m_shader(s) {
     glGenBuffers(1, &m_VBO);
     glGenBuffers(1, &m_EBO);
     glGenVertexArrays(1, &m_VAO);
   }
-  ~vertexObject() {
+  ~mesh() {
     glDeleteBuffers(1, &m_VBO);
     glDeleteBuffers(1, &m_EBO);
     glDeleteVertexArrays(1, &m_VAO);
@@ -31,11 +33,11 @@ public:
 };
 
 class sphere {
-  vertexObject *m_vObj;
 public:
+  glm::vec3 position;
   const float m_radius;
-  static void gen_vertex_data(unsigned int nodes, vertexObject& vObj);
-  sphere(vertexObject *vObj, float radius) : m_vObj(vObj), m_radius(radius) {}
+  static void gen_vertex_data(unsigned int nodes, mesh& mesh);
+  sphere(float radius) : m_radius(radius) {}
 };
 
 

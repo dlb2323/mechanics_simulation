@@ -1,27 +1,27 @@
 #include "sphere.hpp"
 #include <cmath>
-void vertexObject::bind() {
+void mesh::bind() {
   m_shader->bind();
   glBindVertexArray(m_VAO);
 }
-void vertexObject::unbind() {
+void mesh::unbind() {
   m_shader->unbind();
   glBindVertexArray(GL_NONE);
 }
-void vertexObject::write_begin() {
+void mesh::write_begin() {
   glBindVertexArray(m_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
 }
-void vertexObject::write_end() {
+void mesh::write_end() {
   glBindVertexArray(GL_NONE);
   glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_NONE);
 }
 
-void vertexObject::set_shader(shader *s) { m_shader = s; }
+void mesh::set_shader(shader *s) { m_shader = s; }
 
-void sphere::gen_vertex_data(unsigned int nodes, vertexObject &vObj) {
+void sphere::gen_vertex_data(unsigned int nodes, mesh &sphere_mesh) {
   double phi, theta;
   int data_locations = 3 * (nodes * (nodes - 1) + 2);
   float *data = new float[data_locations];
@@ -79,7 +79,7 @@ void sphere::gen_vertex_data(unsigned int nodes, vertexObject &vObj) {
   }
 
 
-  vObj.write_begin();
+  sphere_mesh.write_begin();
   glEnableVertexAttribArray(0);
   glBufferData(GL_ARRAY_BUFFER, data_locations * sizeof(float), data,
                GL_STATIC_DRAW);
@@ -91,13 +91,13 @@ void sphere::gen_vertex_data(unsigned int nodes, vertexObject &vObj) {
 
   delete[] tree;
   delete[] data;
-  vObj.write_end();
-  vObj.set_elements(vertices*6);
+  sphere_mesh.write_end();
+  sphere_mesh.set_elements(vertices*6);
 }
-void vertexObject::set_elements(unsigned int elements) {
+void mesh::set_elements(unsigned int elements) {
   m_elements = elements; 
 }
 
-void vertexObject::draw() {
+void mesh::draw() {
   glDrawElements(GL_TRIANGLES, m_elements, GL_UNSIGNED_INT, 0);
 }
