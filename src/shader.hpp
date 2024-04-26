@@ -39,6 +39,8 @@ static const unsigned int load_shader(std::string source_path,
 
 class shader {
   const unsigned int m_program;
+  unsigned int m_u_mvp_location;
+  unsigned int m_u_time_location;
 
 public:
   shader(std::string vertex_path, std::string fragment_path) : m_program(glCreateProgram()) {
@@ -61,6 +63,8 @@ public:
     /* delete used shader objects */
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
+    m_u_mvp_location = get_uniform_location("u_mpv");
+    m_u_time_location = get_uniform_location("u_time");
   }
   ~shader() {
     glDeleteProgram(m_program);
@@ -69,6 +73,8 @@ public:
   void bind();
   void unbind();
   unsigned int get_uniform_location(std::string name);
+  unsigned int mvp_location() const { return m_u_mvp_location; }
+  unsigned int time_location() const { return m_u_time_location; }
 };
 
 #endif // !SHADER_H
