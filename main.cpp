@@ -33,9 +33,14 @@ void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id,
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_F11 && action == GLFW_PRESS) {
-      static bool fs = true;
-      glfwSetWindowMonitor(window, fs ? NULL : glfwGetPrimaryMonitor(), 0, 0, 1200, 800, 60);
-      fs = !fs;
+      int width = 1200, height = 800;
+      GLFWmonitor* monitor = glfwGetWindowMonitor(window);
+      if (!monitor) {
+        const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        width = mode->width;
+        height = mode->height;
+      }
+      glfwSetWindowMonitor(window, monitor ? NULL : glfwGetPrimaryMonitor(), 50, 50, width, height, 60);
     }
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
       glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -59,8 +64,15 @@ int main() {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
   glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
-
-  window = glfwCreateWindow(1200, 800, "mechanics_simulation", glfwGetPrimaryMonitor(), NULL);
+  
+  int width, height;
+  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+  if (monitor) {
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    width = mode->width;
+    height = mode->height;
+  }
+  window = glfwCreateWindow(width, height, "mechanics_simulation", glfwGetPrimaryMonitor(), NULL);
   glfwSetKeyCallback(window, key_callback);
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   glfwMakeContextCurrent(window);

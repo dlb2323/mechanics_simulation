@@ -74,7 +74,7 @@ public:
         sphere_mesh(&main_shader) {
     selection = NULL;
     GUIitem::selected_shader = &single_colour;
-    sphere::gen_vertex_data(12, sphere_mesh);
+    sphere::gen_vertex_data(120, sphere_mesh);
   }
   ~environment() {
     auto clean = [](object *p_object) { delete p_object; };
