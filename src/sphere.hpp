@@ -42,17 +42,21 @@ mesh* m_mesh;
 public:
   glm::vec3 position;
 
-  object(mesh* mesh) : m_mesh(mesh) {}
+  object(std::string& name, mesh* mesh) : m_name(name), m_mesh(mesh) {}
 
   std::string get_name() const { return m_name; }
   virtual void draw(glm::mat4& modelview_matrix) const { std::cout << "test\n"; };
+};
+
+class particle : public object {
+public:
 };
 
 class sphere : public object {
   const float m_radius;
 public:
   static void gen_vertex_data(unsigned int nodes, mesh& mesh);
-  sphere(mesh* mesh, float radius) : object(mesh), m_radius(radius) {} 
+  sphere(std::string& name, mesh* mesh, float radius) : object(name, mesh), m_radius(radius) {} 
   float get_radius() const { return m_radius; };
   void draw(glm::mat4& viewprojection_matrix) const override;
 };

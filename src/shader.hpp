@@ -63,7 +63,7 @@ public:
     /* delete used shader objects */
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
-    m_u_mvp_location = get_uniform_location("u_mpv");
+    m_u_mvp_location = get_uniform_location("u_mvp");
     m_u_time_location = get_uniform_location("u_time");
   }
   ~shader() {
