@@ -14,14 +14,27 @@
 #include "backends/imgui_impl_opengl3.h"
 #include "imgui.h"
 
-#include "environment.hpp"
+class environment;
+class shader;
 
 class GUI {
 public:
+  enum STATE { EDIT,SIMULATE };
+  static STATE state;
   GUI() {}
   static void show(environment& env);
   static void help();
   static void particle_options(std::string name);
 };
+
+class GUIitem {
+protected:
+  bool selected = false;
+public:
+  static shader* selected_shader;
+  GUIitem() {}
+  virtual void show() const {};
+};
+
 
 #endif // !GUI_H

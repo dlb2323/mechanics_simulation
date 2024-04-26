@@ -27,7 +27,6 @@ public:
 
 class camera {
   enum MODE { STILL, FOCUS, TRACK };
-  glm::mat4 m_offset;
   glm::vec3 m_position;
   glm::vec3 m_start;
   glm::vec3 m_focus_point;
@@ -41,9 +40,6 @@ public:
   float zoom = 1.0f;
   float rotation = M_PI / 4;
   camera() {
-    const float of = 1.0f;
-    m_offset = glm::mat4(1.0f);
-    m_offset = glm::translate(m_offset, glm::vec3(of, 0.0f, 0.0f));
     glm::vec3 point(0.0f);
     focus(point);
   }
@@ -56,7 +52,7 @@ public:
     glm::mat4 view(1.0f);
     glm::vec3 position = m_position + glm::vec3(0, 5, 10) * zoom;
     view = glm::lookAt(position, m_position, glm::vec3(0.0f, 1.0f, 0.0f));
-    return view * m_offset;
+    return view;
   }
 };
 
@@ -64,17 +60,21 @@ public:
 class environment {
   glm::mat4 proj;
   shader main_shader;
+  shader single_colour;
   mesh sphere_mesh;
-  GLFWwindow *const window;
   std::vector<object *> objects;
-
+  object* selection;
 public:
+  GLFWwindow *const window;
   static camera current_camera;
   environment(GLFWwindow *window)
       : window(window),
         main_shader("vertex_shader.glsl", "fragment_shader.glsl"),
+        single_colour("vertex_shader.glsl", "single_colour_shader.glsl"),
         sphere_mesh(&main_shader) {
-    sphere::gen_vertex_data(120, sphere_mesh);
+    selection = NULL;
+    GUIitem::selected_shader = &single_colour;
+    sphere::gen_vertex_data(12, sphere_mesh);
   }
   ~environment() {
     auto clean = [](object *p_object) { delete p_object; };
@@ -87,6 +87,13 @@ public:
   object *object_at(unsigned int idx) {
     return (idx < objects.size()) ? objects[idx] : NULL;
   };
+  void select(object* object) {
+    if (selection) {
+      selection->deselect();
+    }
+    object->select();
+    selection = object;
+  }
 };
 
 #endif // !ENVIRONMENT_H

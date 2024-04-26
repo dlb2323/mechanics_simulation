@@ -1,11 +1,12 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "shader.hpp"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "shader.hpp"
+#include "gui.hpp"
 
 class mesh {
   shader *m_shader;
@@ -39,26 +40,34 @@ class object  {
 std::string m_name;
 protected:
 mesh* m_mesh;
+const float m_scale;
 public:
   glm::vec3 position;
 
-  object(std::string& name, mesh* mesh) : m_name(name), m_mesh(mesh) {}
+  object(std::string& name, mesh* mesh, float scale) : m_name(name), m_mesh(mesh), m_scale(scale) {}
 
   std::string get_name() const { return m_name; }
-  virtual void draw(glm::mat4& modelview_matrix) const { std::cout << "test\n"; };
+  void set_shader(shader* shader) const { m_mesh->set_shader(shader); };
+  virtual void draw(glm::mat4& modelview_matrix) const = 0;
+  virtual void select() = 0;
+  virtual void deselect() = 0;
 };
 
-class particle : public object {
-public:
-};
 
-class sphere : public object {
-  const float m_radius;
+class particle : public object, public GUIitem {
 public:
-  static void gen_vertex_data(unsigned int nodes, mesh& mesh);
-  sphere(std::string& name, mesh* mesh, float radius) : object(name, mesh), m_radius(radius) {} 
-  float get_radius() const { return m_radius; };
   void draw(glm::mat4& viewprojection_matrix) const override;
+  void show() const override;
+};
+
+class sphere : public object, public GUIitem {
+public:
+  sphere(std::string& name, mesh* mesh, float scale) : object(name, mesh, scale) {}
+  static void gen_vertex_data(unsigned int nodes, mesh& mesh);
+  float get_radius() const { return m_scale; };
+  void draw(glm::mat4& viewprojection_matrix) const override;
+  void select() override { selected = true; };
+  void deselect() override { selected = false; };
 };
 
 

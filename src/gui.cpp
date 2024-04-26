@@ -1,8 +1,7 @@
 #include "gui.hpp"
+#include "environment.hpp"
 
 void GUI::show(environment& env) {
-  // Demonstrate the various window flags. Typically you would just use the
-  // default!
   static bool no_titlebar = false;
   static bool no_scrollbar = false;
   static bool no_menu = false;
@@ -39,9 +38,16 @@ void GUI::show(environment& env) {
   // We specify a default position/size in case there's no data in the .ini
   // file. We only do it to make the demo applications a little more welcoming,
   // but typically this isn't required.
+  int width, height;
+  glfwGetFramebufferSize(env.window, &width, &height);
+  GLFWmonitor* monitor = glfwGetWindowMonitor(env.window);
+  if (monitor) {
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    height = mode->height;
+  }
   const ImGuiViewport *main_viewport = ImGui::GetMainViewport();
-  ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
-  ImGui::SetNextWindowSize(ImVec2(400, 800), ImGuiCond_Once);
+  ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
+  ImGui::SetNextWindowSize(ImVec2(500, height), ImGuiCond_Always);
 
   // Main body of the Demo window starts here.
   if (!ImGui::Begin("Mechanics Simulation Window", NULL, window_flags)) {
@@ -54,35 +60,55 @@ void GUI::show(environment& env) {
   ImGui::SliderFloat("zoom", &environment::current_camera.zoom,
                      0.0f, 10.0f, "%.4f");
 
-  // particles
-  const unsigned int input_text_charlen = 128;
-  const unsigned int particles_array_len = 50;
-  ImGui::Text("list of particles: size %d", 1);
-  ImGui::Spacing();
+  ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+  if (ImGui::BeginTabBar("Objects", tab_bar_flags))
   {
-    static int code = 65;
-    char input[input_text_charlen] = {(char)code};
-    ImGui::InputText("particle name", input, IM_ARRAYSIZE(input));
-    if (ImGui::Button("add particle")) {
-      std::string input_string(input);
-      bool match = false;
-      for (int i = 0; i < env.object_count(); i++) {
-        if (env.object_at(i)->get_name() == input_string) {
-          match = true;
-          break;
-        }
+      if (ImGui::BeginTabItem("Sphere"))
+      {
+          ImGui::Text("Add Sphere");
+          const unsigned int input_text_charlen = 128;
+          ImGui::Text("list of particles: size %d", 1);
+          {
+            static int code = 65;
+            char input[input_text_charlen] = {(char)code};
+            ImGui::InputText("particle name", input, IM_ARRAYSIZE(input));
+            if (ImGui::Button("add particle")) {
+              std::string input_string(input);
+              bool match = false;
+              for (int i = 0; i < env.object_count(); i++) {
+                if (env.object_at(i)->get_name() == input_string) {
+                  match = true;
+                  break;
+                }
+              }
+              if (!match) {
+                std::string s_input(input);
+                sphere *p_sphere = env.create(s_input, 5);
+                p_sphere->position =
+                    glm::vec3(std::rand() % 100 - 50, std::rand() % 100 - 50,
+                              std::rand() % 100 - 50);
+                environment::current_camera.track(&p_sphere->position);
+                code++;
+              }
+            }
+          }
+          ImGui::EndTabItem();
       }
-      if (!match) {
-        std::string s_input(input);
-        sphere *p_sphere = env.create(s_input, 5);
-        p_sphere->position =
-            glm::vec3(std::rand() % 100 - 50, std::rand() % 100 - 50,
-                      std::rand() % 100 - 50);
-        environment::current_camera.track(&p_sphere->position);
-        code++;
+      if (ImGui::BeginTabItem("Broccoli"))
+      {
+          ImGui::Text("This is the Broccoli tab!\nblah blah blah blah blah");
+          ImGui::EndTabItem();
       }
-    }
+      if (ImGui::BeginTabItem("Cucumber"))
+      {
+          ImGui::Text("This is the Cucumber tab!\nblah blah blah blah blah");
+          ImGui::EndTabItem();
+      }
+      ImGui::EndTabBar();
   }
+  ImGui::Separator();
+
+  // particles
   ImGui::Spacing();
 
   {
@@ -112,7 +138,7 @@ void GUI::show(environment& env) {
       const bool is_selected = (selection_mask & (1 << i)) != 0;
       if (is_selected)
         node_flags |= ImGuiTreeNodeFlags_Selected;
-      if (i < particles_array_len) {
+      if (i < env.object_count()) {
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         bool node_open = ImGui::TreeNodeEx((void *)(intptr_t)i, node_flags,
                                            env.object_at(i)->get_name().c_str());
@@ -140,8 +166,10 @@ void GUI::show(environment& env) {
            // clicking on item that is part of the selection
         selection_mask = (1 << node_clicked); // Click to single-select
 
-      if (env.object_at(node_clicked))
+      if (env.object_at(node_clicked)) {
         environment::current_camera.track(&env.object_at(node_clicked)->position);
+        env.select(env.object_at(node_clicked));
+      }
       else
         std::cout << "ERROR SELECTING NON-EXISTING OBJECT\n";
     }
@@ -163,3 +191,6 @@ void GUI::help() {
 
 void GUI::particle_options(std::string name) {
 }
+
+// GUIitem
+shader* GUIitem::selected_shader;

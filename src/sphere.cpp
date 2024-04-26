@@ -103,6 +103,11 @@ void sphere::gen_vertex_data(unsigned int nodes, mesh &sphere_mesh) {
 }
 
 void sphere::draw(glm::mat4& vp_matrix) const {
+  if (selected) {
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilMask(0xFF);
+  }
+
   m_mesh->bind();
 
   glm::mat4 model = glm::mat4(1.0f);
@@ -110,7 +115,7 @@ void sphere::draw(glm::mat4& vp_matrix) const {
   model = glm::rotate(model, (float)glfwGetTime() / 20,
                       glm::vec3(1.0f, 0.0f, 1.0f));
   model = glm::scale(
-      model, glm::vec3(m_radius, m_radius, m_radius));
+      model, glm::vec3(1.0f)*m_scale);
 
   glm::mat4 mvp = vp_matrix * model;
   glUniformMatrix4fv(m_mesh->get_shader()->mvp_location(), 1, GL_FALSE, glm::value_ptr(mvp));
@@ -119,5 +124,30 @@ void sphere::draw(glm::mat4& vp_matrix) const {
   m_mesh->draw();
 
   m_mesh->unbind();
+
+  if (selected) {
+      glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+      glStencilMask(0x00);
+      glDisable(GL_DEPTH_TEST);
+
+      shader* mesh_shader = m_mesh->get_shader();
+      m_mesh->set_shader(selected_shader);
+      m_mesh->bind();
+
+      model = glm::scale(model, glm::vec3(1.1f));
+      mvp = vp_matrix * model;
+      glUniformMatrix4fv(m_mesh->get_shader()->mvp_location(), 1, GL_FALSE, glm::value_ptr(mvp));
+      glUniform1f(m_mesh->get_shader()->time_location(), (float)glfwGetTime());
+      m_mesh->draw();
+      m_mesh->unbind();
+      m_mesh->set_shader(mesh_shader);
+      glStencilMask(0xFF);
+      glStencilFunc(GL_ALWAYS, 0, 0xFF);
+      glEnable(GL_DEPTH_TEST);
+  }
 }
 
+
+// particle
+void particle::draw(glm::mat4& viewprojection_matrix) const {}
+void particle::show() const {}
