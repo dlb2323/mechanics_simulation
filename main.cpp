@@ -13,6 +13,7 @@
 
 #include "src/environment.hpp"
 #include "src/gui.hpp"
+#include "tree.hpp"
 
 // gen sphere
 // gl stuff
@@ -121,20 +122,20 @@ int main() {
   io.Fonts->AddFontFromFileTTF("res/IBMPlexMono-Light.otf", 20.0f);
   // end
 
-  /* int count = 0; 
-  tree_node<int>* rootl = tree_node<int>::create_new(count++);
-  for (int i = 0; i < 4; i++)
-    rootl->insert_node(tree_node<int>::create_new(count++));
-  auto c1 = rootl->get_child(0);
-  for (int i = 0; i < 4; i++)
-    c1->insert_node(tree_node<int>::create_new(count++));
-  auto c2 = c1->get_child(0);
-  for (int i = 0; i < 4; i++)
-    c2->insert_node(tree_node<int>::create_new(count++));
-  auto t = rootl->get_traversal_state(traversal_state<int>::MODE::INORDER);
-  while(t.next())
-    std::cout << t.get_item() << std::endl;
-  std::cin.get(); */
+
+  // int count = 0; 
+  // tree_node<int>* rootl = tree_node<int>::create_new(count++);
+  // for (int i = 0; i < 4; i++)
+  //   rootl->insert_node(tree_node<int>::create_new(count++));
+  // auto c1 = rootl->get_child(0);
+  // for (int i = 0; i < 4; i++)
+  //   c1->insert_node(tree_node<int>::create_new(count++));
+  // auto c2 = c1->get_child(0);
+  // for (int i = 0; i < 4; i++)
+  //   c2->insert_node(tree_node<int>::create_new(count++));
+  // auto t = rootl->get_traversal_state(traversal_state<int>::MODE::INORDER);
+  // while(t.next())
+  //   std::cout << t.get_item() << std::endl;
 
 
   environment env(window);

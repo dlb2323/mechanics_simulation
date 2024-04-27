@@ -34,6 +34,7 @@ protected:
   bool selected = false;
 public:
   GUIitem(std::string& name) : m_name(name) {}
+  GUIitem(const char * name) : m_name(name) {}
   virtual void show() const {};
   std::string get_name() const { return m_name; }
 };
