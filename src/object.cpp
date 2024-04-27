@@ -27,6 +27,17 @@ void mesh::set_elements(unsigned int elements) {
 void mesh::draw() {
   glDrawElements(GL_TRIANGLES, m_elements, GL_UNSIGNED_INT, 0);
 }
+// object
+void object::update(float delta) {
+  if (m_mode == MODE::ACTIVE) {
+    if (m_timestamp.get_elapsed_time() > m_total_time) {
+      position = m_end;
+      m_mode = MODE::STILL;
+    }
+    position = lerp(m_start, m_end,
+                      smooth(m_timestamp.get_elapsed_time() / m_total_time));
+  }
+}
 
 void particle::gen_vertex_data(unsigned int nodes, mesh &particle_mesh) {
   double phi, theta;
@@ -85,7 +96,6 @@ void particle::gen_vertex_data(unsigned int nodes, mesh &particle_mesh) {
     }
   }
 
-
   particle_mesh.write_begin();
   glEnableVertexAttribArray(0);
   glBufferData(GL_ARRAY_BUFFER, data_locations * sizeof(float), data,
@@ -105,6 +115,133 @@ void particle::gen_vertex_data(unsigned int nodes, mesh &particle_mesh) {
 
 void world::draw(glm::mat4 &vp_matrix) const {};
 void world::draw(glm::mat4 &vp_matrix, float scale) const {};
+
+void world::update(float delta) {
+  this->object::update(delta);
+}
+
+void world::show() const {
+  ImGui::SliderFloat("scale", (float *)&m_scale, 0.0f, 30.0f);
+}
+
+// point
+void point::draw(glm::mat4& vp_matrix) const {
+  if (selected) {
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+  }
+
+  m_mesh->bind();
+
+  glm::mat4 model = glm::mat4(1.0f);
+  model = glm::translate(model, position);
+  model = glm::rotate(model, (float)glfwGetTime() / 20,
+                      glm::vec3(1.0f, 0.0f, 1.0f));
+  model = glm::scale(
+      model, glm::vec3(1.0f)*m_scale);
+
+  glm::mat4 mvp = vp_matrix * model;
+  glUniformMatrix4fv(m_mesh->get_shader()->mvp_location(), 1, GL_FALSE, glm::value_ptr(mvp));
+  glUniform1f(m_mesh->get_shader()->time_location(), (float)glfwGetTime());
+
+  m_mesh->draw();
+
+  m_mesh->unbind();
+
+  if (selected) {
+      glStencilFunc(GL_ALWAYS, 0, 0xFF);
+  }
+}
+
+void point::draw(glm::mat4& vp_matrix, float scale) const {
+    if (selected) {
+      glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    }
+    shader* mesh_shader = m_mesh->get_shader();
+    m_mesh->set_shader(shader::single_colour);
+    m_mesh->bind();
+
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, position);
+    model = glm::rotate(model, (float)glfwGetTime() / 20,
+                        glm::vec3(1.0f, 0.0f, 1.0f));
+    model = glm::scale(
+        model, glm::vec3(1.0f)*m_scale*scale);
+
+    glm::mat4 mvp = vp_matrix * model;
+    glUniformMatrix4fv(m_mesh->get_shader()->mvp_location(), 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniform1f(m_mesh->get_shader()->time_location(), (float)glfwGetTime());
+    m_mesh->draw();
+    m_mesh->unbind();
+    m_mesh->set_shader(mesh_shader);
+    if (selected) {
+      glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    }
+}
+
+void point::show() const {
+  ImGui::SliderFloat("scale", (float *)&m_scale, 0.0f, 30.0f);
+}
+
+// plane
+void plane::draw(glm::mat4& vp_matrix) const {
+  if (selected) {
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+  }
+
+  m_mesh->bind();
+
+  glm::mat4 model = glm::mat4(1.0f);
+  model = glm::translate(model, position);
+  model = glm::rotate(model, (float)glfwGetTime() / 20,
+                      glm::vec3(1.0f, 0.0f, 1.0f));
+  model = glm::scale(
+      model, glm::vec3(1.0f)*m_scale);
+
+  glm::mat4 mvp = vp_matrix * model;
+  glUniformMatrix4fv(m_mesh->get_shader()->mvp_location(), 1, GL_FALSE, glm::value_ptr(mvp));
+  glUniform1f(m_mesh->get_shader()->time_location(), (float)glfwGetTime());
+
+  m_mesh->draw();
+
+  m_mesh->unbind();
+
+  if (selected) {
+      glStencilFunc(GL_ALWAYS, 0, 0xFF);
+  }
+}
+
+void plane::draw(glm::mat4& vp_matrix, float scale) const {
+    if (selected) {
+      glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    }
+    shader* mesh_shader = m_mesh->get_shader();
+    m_mesh->set_shader(shader::single_colour);
+    m_mesh->bind();
+
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, position);
+    model = glm::rotate(model, (float)glfwGetTime() / 20,
+                        glm::vec3(1.0f, 0.0f, 1.0f));
+    model = glm::scale(
+        model, glm::vec3(1.0f)*m_scale*scale);
+
+    glm::mat4 mvp = vp_matrix * model;
+    glUniformMatrix4fv(m_mesh->get_shader()->mvp_location(), 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniform1f(m_mesh->get_shader()->time_location(), (float)glfwGetTime());
+    m_mesh->draw();
+    m_mesh->unbind();
+    m_mesh->set_shader(mesh_shader);
+    if (selected) {
+      glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    }
+}
+
+void plane::show() const {
+  ImGui::SliderFloat("scale", (float *)&m_scale, 0.0f, 30.0f);
+}
+
+// particle
+mesh* particle::particle_mesh;
 
 void particle::draw(glm::mat4& vp_matrix) const {
   if (selected) {
@@ -138,7 +275,7 @@ void particle::draw(glm::mat4& vp_matrix, float scale) const {
       glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     }
     shader* mesh_shader = m_mesh->get_shader();
-    m_mesh->set_shader(m_select_shader);
+    m_mesh->set_shader(shader::single_colour);
     m_mesh->bind();
 
     glm::mat4 model = glm::mat4(1.0f);
@@ -157,4 +294,12 @@ void particle::draw(glm::mat4& vp_matrix, float scale) const {
     if (selected) {
       glStencilFunc(GL_ALWAYS, 0, 0xFF);
     }
+}
+
+void particle::show() const {
+  ImGui::SliderFloat("scale", (float *)&m_scale, 0.0f, 30.0f);
+}
+
+void particle::update(float delta) {
+  this->object::update(delta);
 }

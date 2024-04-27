@@ -15,16 +15,6 @@
 #include "object.hpp"
 
 
-class timestamp {
-  std::chrono::time_point<std::chrono::system_clock> start;
-public:
-  timestamp() {}
-  void begin() { start = std::chrono::system_clock::now(); }
-  double get_elapsed_time() {
-    return ((std::chrono::duration<double>)(std::chrono::system_clock::now() - start)).count();
-  }
-};
-
 class camera {
   enum MODE { STILL, FOCUS, TRACK };
   glm::vec3 m_position;
@@ -34,10 +24,9 @@ class camera {
   timestamp m_timestamp;
   const double m_total_time = 0.5;
   camera::MODE m_mode;
-  double smooth(double x);
 
 public:
-  float zoom = 1.0f;
+  float zoom = 8.0f;
   float rotation = M_PI / 4;
   camera() {
     glm::vec3 point(0.0f);
@@ -62,9 +51,6 @@ class tree_node;
 // world rendering
 class environment {
   glm::mat4 proj;
-  shader main_shader;
-  shader single_colour;
-  mesh particle_mesh;
   tree_node<object*>* selection;
 public:
   tree_node<object*>* objects;
@@ -74,7 +60,7 @@ public:
   ~environment(); 
   void update(float delta);
   void draw();
-  tree_node<object*>* create(std::string &name, unsigned int radius);
+  tree_node<object*>* create(object* object);
   // int object_count() const { return objects.size(); }
   // object *object_at(unsigned int idx) {
   //   return (idx < objects.size()) ? objects[idx] : NULL;

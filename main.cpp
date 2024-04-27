@@ -134,6 +134,15 @@ int main() {
   //   std::cout << t.get_item() << std::endl;
 
 
+  // load data
+  shader main("vertex_shader.glsl", "fragment_shader.glsl");
+  shader::main = &main;
+  shader single_colour("vertex_shader.glsl", "single_colour_shader.glsl");
+  shader::single_colour = &single_colour;
+
+  mesh particle_mesh(&main);
+  particle::gen_vertex_data(120, particle_mesh);
+  particle::particle_mesh = &particle_mesh;
   environment env(window);
 
   timestamp delta;

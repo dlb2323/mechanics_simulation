@@ -1,6 +1,8 @@
 #include "shader.hpp"
   /* create shader program */
 // const unsigned int mvp_location = glGetUniformLocation(shader_program, "u_mvp");
+shader* shader::main;
+shader* shader::single_colour;
 void shader::bind() {
     glUseProgram(m_program);
 }

@@ -43,6 +43,8 @@ class shader {
   unsigned int m_u_time_location;
 
 public:
+  static shader* main;
+  static shader* single_colour;
   shader(std::string vertex_path, std::string fragment_path) : m_program(glCreateProgram()) {
     /* create and link vertex and fragment shaders */
 
