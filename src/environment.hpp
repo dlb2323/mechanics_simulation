@@ -12,7 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shader.hpp"
-#include "sphere.hpp"
+#include "object.hpp"
 
 
 class timestamp {
@@ -64,27 +64,42 @@ class environment {
   glm::mat4 proj;
   shader main_shader;
   shader single_colour;
-  mesh sphere_mesh;
-  tree_node<object*>* objects;
-  object* selection;
+  mesh particle_mesh;
+  tree_node<object*>* selection;
 public:
+  tree_node<object*>* objects;
   GLFWwindow *const window;
   static camera current_camera;
   environment(GLFWwindow *window);
   ~environment(); 
   void update(float delta);
   void draw();
-  sphere *create(std::string &name, unsigned int radius);
+  tree_node<object*>* create(std::string &name, unsigned int radius);
   // int object_count() const { return objects.size(); }
   // object *object_at(unsigned int idx) {
   //   return (idx < objects.size()) ? objects[idx] : NULL;
   // };
-  void select(object* object) {
+  void select(tree_node<object*>* object) {
     if (selection) {
-      selection->deselect();
+      selection->get_data()->deselect();
     }
-    object->select();
+    object->get_data()->select();
     selection = object;
+  }
+  tree_node<object*>* get_selection() const { return selection; }; 
+  void deselect(bool reselect = false) {
+    if (selection) {
+      selection->get_data()->deselect();
+      tree_node<object*>* parent = selection->get_parent();
+      if (parent && reselect) {
+        if(parent->get_child_count() > 1)
+          select(parent->get_child(parent->get_child(0) == selection? 1 : 0));
+        else
+         select(parent);
+        return;
+      }
+    }
+    selection = NULL;
   }
 };
 

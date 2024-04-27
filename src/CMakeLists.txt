@@ -1,8 +1,8 @@
 set(SOURCE_FILES
     shader.hpp
     shader.cpp
-    sphere.cpp
-    sphere.hpp
+    object.hpp
+    object.cpp
     environment.hpp
     environment.cpp
     gui.hpp

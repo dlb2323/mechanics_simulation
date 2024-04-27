@@ -1,4 +1,4 @@
-#include "sphere.hpp"
+#include "object.hpp"
 #include <cmath>
 void mesh::bind() {
   m_shader->bind();
@@ -28,7 +28,7 @@ void mesh::draw() {
   glDrawElements(GL_TRIANGLES, m_elements, GL_UNSIGNED_INT, 0);
 }
 
-void sphere::gen_vertex_data(unsigned int nodes, mesh &sphere_mesh) {
+void particle::gen_vertex_data(unsigned int nodes, mesh &particle_mesh) {
   double phi, theta;
   int data_locations = 3 * (nodes * (nodes - 1) + 2);
   float *data = new float[data_locations];
@@ -86,7 +86,7 @@ void sphere::gen_vertex_data(unsigned int nodes, mesh &sphere_mesh) {
   }
 
 
-  sphere_mesh.write_begin();
+  particle_mesh.write_begin();
   glEnableVertexAttribArray(0);
   glBufferData(GL_ARRAY_BUFFER, data_locations * sizeof(float), data,
                GL_STATIC_DRAW);
@@ -98,15 +98,15 @@ void sphere::gen_vertex_data(unsigned int nodes, mesh &sphere_mesh) {
 
   delete[] tree;
   delete[] data;
-  sphere_mesh.write_end();
-  sphere_mesh.set_elements(vertices*6);
+  particle_mesh.write_end();
+  particle_mesh.set_elements(vertices*6);
 }
 // world
 
 void world::draw(glm::mat4 &vp_matrix) const {};
 void world::draw(glm::mat4 &vp_matrix, float scale) const {};
 
-void sphere::draw(glm::mat4& vp_matrix) const {
+void particle::draw(glm::mat4& vp_matrix) const {
   if (selected) {
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
   }
@@ -133,7 +133,7 @@ void sphere::draw(glm::mat4& vp_matrix) const {
   }
 }
 
-void sphere::draw(glm::mat4& vp_matrix, float scale) const {
+void particle::draw(glm::mat4& vp_matrix, float scale) const {
     if (selected) {
       glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     }
@@ -158,9 +158,3 @@ void sphere::draw(glm::mat4& vp_matrix, float scale) const {
       glStencilFunc(GL_ALWAYS, 0, 0xFF);
     }
 }
-
-
-
-// particle
-void particle::draw(glm::mat4& viewprojection_matrix) const {}
-void particle::show() const {}

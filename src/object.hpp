@@ -70,13 +70,7 @@ public:
 
 class particle : public object {
 public:
-  void draw(glm::mat4 &vp_matrix) const override;
-  void show() const override;
-};
-
-class sphere : public object {
-public:
-  sphere(std::string &name, mesh *mesh, float scale, shader *select_shader)
+  particle(std::string &name, mesh *mesh, float scale, shader *select_shader)
       : object(name, mesh, scale, select_shader) {}
   static void gen_vertex_data(unsigned int nodes, mesh &mesh);
   float get_radius() const { return m_scale; };

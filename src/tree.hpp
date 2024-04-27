@@ -27,8 +27,8 @@ public:
 };
 
 template <typename T> class tree_node {
+    tree_node<T>* parent = NULL;
     T data;
-    bool lock = false;
     std::vector<tree_node<T>*> children;
 
     tree_node<T>(T data) { tree_node<T>::data = data; }
@@ -42,6 +42,7 @@ public:
     void insert_node(tree_node<T>* node, int idx = -1);
 
     T get_data() const { return data; }
+    tree_node<T>* get_parent() const { return parent; }
     tree_node<T>* get_child(int idx) const { return children[idx]; }
     unsigned int get_child_count() const { return children.size(); }
 };
@@ -83,6 +84,7 @@ inline void tree_node<T>::insert_node(tree_node<T>* node, int idx) {
         children.insert(children.begin() + idx, node);
         return;
     }
+    node->parent = this;
     children.push_back(node);
     return;
 }
@@ -105,6 +107,8 @@ inline int tree_node<T>::size(tree_node<T>* node) {
 
 template <typename T> 
 inline void tree_node<T>::destroy(tree_node<T>* node) {
+    if (node->parent)
+        node->parent->children.erase(std::find(node->parent->children.begin(), node->parent->children.end(), node));
     if (node->data)
         delete node->data;
     for (int i = 0; i < node->children.size(); i++)

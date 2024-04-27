@@ -1,5 +1,7 @@
 #include "gui.hpp"
+#include "object.hpp"
 #include "environment.hpp"
+
 
 void GUI::show(environment& env) {
   static bool no_titlebar = false;
@@ -81,15 +83,24 @@ void GUI::show(environment& env) {
               //     break;
               if (!match) {
                 std::string s_input(input);
-                sphere *p_sphere = env.create(s_input, 5);
-                p_sphere->position =
+                tree_node<object*>* p_object_node = env.create(s_input, 5);
+                p_object_node->get_data()->position =
                     glm::vec3(std::rand() % 100 - 50, std::rand() % 100 - 50,
                               std::rand() % 100 - 50);
-                environment::current_camera.track(&p_sphere->position);
+                environment::current_camera.track(&p_object_node->get_data()->position);
                 code++;
               }
             }
+            ImGui::SameLine(364.0f);
+            if (ImGui::Button("remove object")) {
+              auto node = env.get_selection();
+              if (node && node->get_data()->get_name() != "world") {
+                env.deselect(true);
+                tree_node<object*>::destroy(node);
+              }
+            }
           }
+
           ImGui::EndTabItem();
       }
       if (ImGui::BeginTabItem("Broccoli"))
@@ -109,24 +120,26 @@ void GUI::show(environment& env) {
   // particles
   ImGui::Spacing();
 
-  {
-    static ImGuiTreeNodeFlags base_flags =
-        ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
-        ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_SpanAllColumns;
-    static bool align_label_with_current_x_position = false;
-    static bool test_drag_and_drop = false;
-    if (align_label_with_current_x_position)
-      ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
+  GUI::show_object_tree(env.objects, env);
 
-    // 'selection_mask' is dumb representation of what may be user-side
-    // selection state.
-    //  You may retain selection state inside or outside your objects in
-    //  whatever format you see fit.
-    // 'node_clicked' is temporary storage of what node we have clicked to
-    // process selection at the end
-    /// of the loop. May be a pointer to your own node type, etc.
-    static int selection_mask = (1 << 2);
-    int node_clicked = -1;
+  // {
+  //   static ImGuiTreeNodeFlags base_flags =
+  //       ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
+  //       ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_SpanAllColumns;
+  //   static bool align_label_with_current_x_position = false;
+  //   static bool test_drag_and_drop = false;
+  //   if (align_label_with_current_x_position)
+  //     ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
+  //
+  //   // 'selection_mask' is dumb representation of what may be user-side
+  //   // selection state.
+  //   //  You may retain selection state inside or outside your objects in
+  //   //  whatever format you see fit.
+  //   // 'node_clicked' is temporary storage of what node we have clicked to
+  //   // process selection at the end
+  //   /// of the loop. May be a pointer to your own node type, etc.
+  //   static int selection_mask = (1 << 2);
+  //   int node_clicked = -1;
   //   for (int i = 0; i < env.object_count(); i++) {
   //     // Disable the default "open on single-click behavior" + set Selected
   //     // flag according to our selection. To alter selection we use
@@ -174,7 +187,8 @@ void GUI::show(environment& env) {
   //   if (align_label_with_current_x_position)
   //     ImGui::Indent(ImGui::GetTreeNodeToLabelSpacing());
   // }
-}
+
+
 
   ImGui::Spacing();
 
@@ -183,10 +197,35 @@ void GUI::show(environment& env) {
   ImGui::End();
 }
 
+void GUI::show_object_tree(tree_node<object*>* object, environment& env) {
+  ImGuiTreeNodeFlags base_flags =
+           ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
+           ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_SpanAllColumns;
+  ImGuiTreeNodeFlags node_flags = base_flags;
+  ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+  if (object == env.get_selection())
+      node_flags |= ImGuiTreeNodeFlags_Selected;
+
+  if (ImGui::TreeNodeEx((void*)(intptr_t)object, node_flags, object->get_data()->get_name().c_str()))
+  {
+    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+      env.select(object);
+      environment::current_camera.focus(object->get_data()->position);
+    }
+    object->get_data()->show();
+    for (int i = 0; i < object->get_child_count(); i++)
+      GUI::show_object_tree(object->get_child(i), env);
+    ImGui::TreePop();
+  }
+}
+
 void GUI::help() {
   if (ImGui::CollapsingHeader("Help")) {
   }
 }
 
 void GUI::particle_options(std::string name) {
+}
+// GUIitem
+void GUIitem::show() const {
 }
