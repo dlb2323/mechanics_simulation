@@ -2,6 +2,7 @@
 #define GUI_H
 
 #include <iostream>
+#include <vector>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>

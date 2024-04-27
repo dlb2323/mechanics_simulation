@@ -56,36 +56,29 @@ public:
   }
 };
 
+template<class T>
+class tree_node;
+
 // world rendering
 class environment {
   glm::mat4 proj;
   shader main_shader;
   shader single_colour;
   mesh sphere_mesh;
-  std::vector<object *> objects;
+  tree_node<object*>* objects;
   object* selection;
 public:
   GLFWwindow *const window;
   static camera current_camera;
-  environment(GLFWwindow *window)
-      : window(window),
-        main_shader("vertex_shader.glsl", "fragment_shader.glsl"),
-        single_colour("vertex_shader.glsl", "single_colour_shader.glsl"),
-        sphere_mesh(&main_shader) {
-    selection = NULL;
-    sphere::gen_vertex_data(120, sphere_mesh);
-  }
-  ~environment() {
-    auto clean = [](object *p_object) { delete p_object; };
-    std::for_each(objects.begin(), objects.end(), clean);
-  };
+  environment(GLFWwindow *window);
+  ~environment(); 
   void update(float delta);
   void draw();
   sphere *create(std::string &name, unsigned int radius);
-  int object_count() const { return objects.size(); }
-  object* object_at(unsigned int idx) {
-    return (idx < objects.size()) ? objects[idx] : NULL;
-  };
+  // int object_count() const { return objects.size(); }
+  // object *object_at(unsigned int idx) {
+  //   return (idx < objects.size()) ? objects[idx] : NULL;
+  // };
   void select(object* object) {
     if (selection) {
       selection->deselect();
