@@ -62,7 +62,7 @@ class environment {
   shader main_shader;
   shader single_colour;
   mesh sphere_mesh;
-  std::vector<sphere *> objects;
+  std::vector<object *> objects;
   object* selection;
 public:
   GLFWwindow *const window;
@@ -83,7 +83,7 @@ public:
   void draw();
   sphere *create(std::string &name, unsigned int radius);
   int object_count() const { return objects.size(); }
-  sphere*object_at(unsigned int idx) {
+  object* object_at(unsigned int idx) {
     return (idx < objects.size()) ? objects[idx] : NULL;
   };
   void select(object* object) {
