@@ -37,18 +37,18 @@ public:
 };
 
 class object  {
-std::string m_name;
 protected:
 mesh* m_mesh;
+shader* m_select_shader;
 const float m_scale;
 public:
   glm::vec3 position;
 
-  object(std::string& name, mesh* mesh, float scale) : m_name(name), m_mesh(mesh), m_scale(scale) {}
+  object(mesh* mesh, float scale, shader* select_shader) : m_mesh(mesh), m_scale(scale), m_select_shader(select_shader) {}
 
-  std::string get_name() const { return m_name; }
   void set_shader(shader* shader) const { m_mesh->set_shader(shader); };
-  virtual void draw(glm::mat4& modelview_matrix) const = 0;
+  virtual void draw(glm::mat4& vp_matrix) const = 0;
+  virtual void draw(glm::mat4& vp_matrix, float scale) const = 0;
   virtual void select() = 0;
   virtual void deselect() = 0;
 };
@@ -62,10 +62,11 @@ public:
 
 class sphere : public object, public GUIitem {
 public:
-  sphere(std::string& name, mesh* mesh, float scale) : object(name, mesh, scale) {}
+  sphere(std::string& name, mesh* mesh, float scale, shader* select_shader) : object(mesh, scale, select_shader), GUIitem(name) {}
   static void gen_vertex_data(unsigned int nodes, mesh& mesh);
   float get_radius() const { return m_scale; };
   void draw(glm::mat4& viewprojection_matrix) const override;
+  void draw(glm::mat4& vp_matrix, float scale) const override;
   void select() override { selected = true; };
   void deselect() override { selected = false; };
 };

@@ -28,12 +28,13 @@ public:
 };
 
 class GUIitem {
+const std::string m_name;
 protected:
   bool selected = false;
 public:
-  static shader* selected_shader;
-  GUIitem() {}
+  GUIitem(std::string& name) : m_name(name) {}
   virtual void show() const {};
+  std::string get_name() const { return m_name; }
 };
 
 

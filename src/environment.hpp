@@ -62,7 +62,7 @@ class environment {
   shader main_shader;
   shader single_colour;
   mesh sphere_mesh;
-  std::vector<object *> objects;
+  std::vector<sphere *> objects;
   object* selection;
 public:
   GLFWwindow *const window;
@@ -73,7 +73,6 @@ public:
         single_colour("vertex_shader.glsl", "single_colour_shader.glsl"),
         sphere_mesh(&main_shader) {
     selection = NULL;
-    GUIitem::selected_shader = &single_colour;
     sphere::gen_vertex_data(120, sphere_mesh);
   }
   ~environment() {
@@ -84,7 +83,7 @@ public:
   void draw();
   sphere *create(std::string &name, unsigned int radius);
   int object_count() const { return objects.size(); }
-  object *object_at(unsigned int idx) {
+  sphere*object_at(unsigned int idx) {
     return (idx < objects.size()) ? objects[idx] : NULL;
   };
   void select(object* object) {
