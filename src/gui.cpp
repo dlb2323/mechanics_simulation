@@ -8,9 +8,11 @@ GUI::STATE GUI::state;
 static object * create_particle(std::string& name) {
  return new particle(name, 3); 
 }
+
 static object * create_point(std::string& name) {
  return new point(name, 1); 
 }
+
 static object * create_plane(std::string& name) {
  return new plane(name, 30); 
 }
@@ -70,8 +72,11 @@ void GUI::show(environment& env) {
     return;
   }
   
-  if (ImGui::Button((GUI::state == GUI::EDIT ? "Start" : "Stop"), ImVec2(100, 30))) {
+  if (ImGui::Button((GUI::state == GUI::EDIT ? "Start" : "Stop"), ImVec2(100, 30)) && env.is_simulation_legal()) {
       GUI::state = GUI::state == GUI::EDIT ? GUI::SIMULATE : GUI::EDIT;
+      if (GUI::state == GUI::SIMULATE) {
+        env.simulation_start();
+      }
   }
   if (GUI::state == GUI::SIMULATE) {
     ImGui::SameLine(120.0f);
@@ -124,7 +129,7 @@ void GUI::show(environment& env) {
                   std::string s_alt = s_input;
                   if (i != 0)
                     s_alt += std::to_string(i);
-                  if (true) { //!match) {
+                  if (!match) {
                     tree_node<object*>* p_object_node = env.create(create_object(s_alt));
                   }
                 }
@@ -153,9 +158,20 @@ void GUI::show(environment& env) {
   ImGui::Spacing();
   if (GUI::state == GUI::EDIT){
       ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
-      ImGui::BeginChild("Objects", ImVec2(ImGui::GetContentRegionAvail().x, 600), ImGuiChildFlags_None, window_flags);
+      ImGui::BeginChild("Objects", ImVec2(ImGui::GetContentRegionAvail().x, 500), ImGuiChildFlags_None, window_flags);
       GUI::show_object_tree(env.objects, env);
       ImGui::EndChild();
+  } else {
+    float a = (env.subjects.w->force-env.subjects.w->mass*env.subjects.w->gravity*sin(env.subjects.pl->rotation))/env.subjects.w->mass;
+    float r = (
+      ((env.subjects.w->force - env.subjects.w->mass*env.subjects.w->gravity
+      *sin(env.subjects.pl->rotation)))
+      /2*env.subjects.w->mass)
+      *env.subjects.time.get_elapsed_time()*env.subjects.time.get_elapsed_time() 
+      + env.subjects.w->u_velocity*env.subjects.time.get_elapsed_time();
+    ImGui::Text((std::string("time elapsed: ") + std::to_string(env.subjects.time.get_elapsed_time())).c_str());
+    ImGui::Text((std::string("acceleration: ") + std::to_string(a)).c_str());
+    ImGui::Text((std::string("displacement: ") + std::to_string(r)).c_str());
   }
 
   ImGui::Spacing();

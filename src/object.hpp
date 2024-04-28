@@ -95,8 +95,18 @@ class world : public object {
 public:
   float distance;
   float friction;
+  float force;
+  float gravity;
+  float mass;
+  float u_velocity;
   world(mesh *mesh, float scale)
-      : object("world", mesh, scale), distance(17.0f) {}
+      : object("world", mesh, scale), distance(1.0f),
+        friction(0.0f),
+        force(1.0f),
+        gravity(9.8f),
+        mass(1.0f),
+        u_velocity(0.0f)
+  {}
 
   void update(float delta) override;
 

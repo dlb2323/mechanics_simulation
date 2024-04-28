@@ -39,7 +39,7 @@ public:
 
   glm::mat4 get_view_matrix() const {
     glm::mat4 view(1.0f);
-    glm::vec3 position = m_position + glm::vec3(0, 5, 10) * zoom;
+    glm::vec3 position = m_position + glm::vec3(0, 5, -10) * zoom;
     view = glm::lookAt(position, m_position, glm::vec3(0.0f, 1.0f, 0.0f));
     return view;
   }
@@ -55,12 +55,9 @@ class environment {
 public:
   typedef struct {
     world* w;
-    point* point_a;
-    point* point_b;
     plane* pl;
     particle* pa;
-    float distance;
-    float friction;
+    timestamp time;
   } simulation;
   simulation subjects;
   tree_node<object*>* objects;
@@ -71,6 +68,8 @@ public:
   void update(float delta);
   void draw();
   bool is_simulation_legal();
+  void simulation_start();
+  glm::vec3 simulation_func();
   tree_node<object*>* create(object* object);
   // int object_count() const { return objects.size(); }
   // object *object_at(unsigned int idx) {

@@ -93,7 +93,11 @@ void world::update(float delta) {
 
 void world::show() const {
   ImGui::SliderFloat("friction", (float*)&friction, 0.0f, 4.0f);
-  ImGui::SliderFloat("distance", (float*)&distance, 1.0f, 70.0f);
+  ImGui::SliderFloat("x", (float*)&distance, 1.0f, 10.0f);
+  ImGui::InputFloat("m", (float*)&mass, 0.0f, 10.0f);
+  ImGui::InputFloat("g", (float*)&gravity, 0.0f, 10.0f);
+  ImGui::InputFloat("f", (float*)&force, 0.0f, 10.0f);
+  ImGui::InputFloat("u", (float*)&u_velocity, 0.0f, 10.0f);
 }
 
 // point
@@ -145,9 +149,10 @@ void plane::gen_vertex_data(mesh &plane_mesh) {
 
 glm::mat4 plane::model_matrix() const {
     glm::mat4 model = glm::mat4(1.0f);
-    float y_rot = M_PI/2.0f;
+    float rot = M_PI/2.0f;
     model = glm::translate(model, position);
-    model = glm::rotate(model, y_rot, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, rot, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, rot, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, rotation, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::scale(model, glm::vec3(1.2f, length, 1.0f));
     model = glm::scale(
@@ -156,7 +161,8 @@ glm::mat4 plane::model_matrix() const {
 }
 
 void plane::show() const {
-  ImGui::SliderFloat("rotation", (float *)&rotation, 0.0f, M_PI);
+  ImGui::SliderFloat("rotation", (float *)&rotation, 0.0f, M_PI/2);
+  ImGui::SliderFloat("length", (float *)&length, 0.0f, 70.0f);
 }
 
 // particle
