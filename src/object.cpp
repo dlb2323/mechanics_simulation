@@ -1,84 +1,89 @@
 #include "object.hpp"
 #include <cmath>
 void mesh::bind() {
+  // bind shader and vertex array buffer for drawing
   m_shader->bind();
   glBindVertexArray(m_VAO);
 }
 void mesh::unbind() {
+  // unbind 
   m_shader->unbind();
   glBindVertexArray(GL_NONE);
 }
 void mesh::write_begin() {
+  // begin writing to the vertex buffer
+  // vertex array buffer first to capture vertex and element order data
   glBindVertexArray(m_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
 }
 void mesh::write_end() {
+  // end writing to mesh, unbind in order of binding
   glBindVertexArray(GL_NONE);
   glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_NONE);
 }
 
+// switch main shader
 void mesh::set_shader(shader *s) { m_shader = s; }
 
 void mesh::set_elements(unsigned int elements) {
   m_elements = elements; 
 }
+
 void mesh::draw() {
+  // draw elements
   glDrawElements(GL_TRIANGLES, m_elements, GL_UNSIGNED_INT, 0);
 }
 // object
 void object::update(float delta) {
   if (m_mode == MODE::ACTIVE) {
+    // take the proportion of time left and smooth it
+    // linear interpolate the result to get the position between the start and end points
+    position = lerp(m_start, m_end, smooth(m_timestamp.get_elapsed_time() / m_total_time));
     if (m_timestamp.get_elapsed_time() > m_total_time) {
+      // snap to final position after the movement time is over, and exit motion state
       position = m_end;
       m_mode = MODE::STILL;
     }
-    position = lerp(m_start, m_end, smooth(m_timestamp.get_elapsed_time() / m_total_time));
   }
 }
 
+// main draw function
 void object::draw(glm::mat4& vp_matrix) const {
-  // if (selected) {
-  //       glStencilFunc(GL_ALWAYS, 1, 0xFF);
-  // }
-
+  // bind mesh for opengl draw state 
   m_mesh->bind();
+  // take view projection matrix and transform it into a modelviewprojection matrix to pass into the shader 
   glm::mat4 mvp = vp_matrix * model_matrix();
+  // pass uniforms to shader
   glUniformMatrix4fv(m_mesh->get_shader()->mvp_location(), 1, GL_FALSE, glm::value_ptr(mvp));
   glUniform3fv(m_mesh->get_shader()->colour_location(), 1, glm::value_ptr(m_colour));
   glUniform1f(m_mesh->get_shader()->time_location(), (float)glfwGetTime());
-
+  // opengl draw vertices
   m_mesh->draw();
-
+  // unbind mesh
   m_mesh->unbind();
 
-  // if (selected) {
-  //     glStencilFunc(GL_ALWAYS, 0, 0xFF);
-  // }
 }
 
+// additional draw function used to draw outlines
 void object::draw(glm::mat4& vp_matrix, float scale) const {
-    // if (selected) {
-    //   glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-    // }
+    // swap out shader for single colour
     shader* mesh_shader = m_mesh->get_shader();
     m_mesh->set_shader(shader::single_colour);
     m_mesh->bind();
 
     glm::mat4 model = model_matrix();
-    model = glm::scale(
-        model, glm::vec3(1.0f)*scale);
+    // further scale the model matrix
+    model = glm::scale(model, glm::vec3(1.0f)*scale);
     glm::mat4 mvp = vp_matrix * model;
     glUniformMatrix4fv(m_mesh->get_shader()->mvp_location(), 1, GL_FALSE, glm::value_ptr(mvp));
     glUniform3fv(m_mesh->get_shader()->colour_location(), 1, glm::value_ptr(m_colour));
     glUniform1f(m_mesh->get_shader()->time_location(), (float)glfwGetTime());
     m_mesh->draw();
     m_mesh->unbind();
+    // return to original shader
     m_mesh->set_shader(mesh_shader);
-    // if (selected) {
-    //   glStencilFunc(GL_ALWAYS, 0, 0xFF);
-    // }
 }
 
 // world
@@ -86,16 +91,13 @@ glm::mat4 world::model_matrix() const {
   return glm::mat4();
 }
 
+// disable drawing
 void world::draw(glm::mat4 &vp_matrix) const {};
 void world::draw(glm::mat4 &vp_matrix, float scale) const {};
 
-void world::update(float delta) {
-  this->object::update(delta);
-}
-
 void world::show() const {
-  ImGui::SliderFloat("friction", (float*)&friction, 0.0f, 4.0f);
-  ImGui::SliderFloat("x", (float*)&distance, 1.0f, 10.0f);
+  // display simulation options with imgui
+  ImGui::InputFloat("x", (float*)&distance, 1.0f, 10.0f);
   ImGui::InputFloat("m", (float*)&mass, 0.0f, 10.0f);
   ImGui::InputFloat("g", (float*)&gravity, 0.0f, 10.0f);
   ImGui::InputFloat("f", (float*)&force, 0.0f, 10.0f);
@@ -112,7 +114,6 @@ glm::mat4 point::model_matrix() const {
 }
 
 void point::show() const {
-  ImGui::SliderFloat("scale", (float *)&m_scale, 0.0f, 30.0f);
 }
 
 // plane
@@ -120,6 +121,7 @@ mesh* plane::plane_mesh;
 
 void plane::gen_vertex_data(mesh &plane_mesh) {
   int data_locations = 4*3;
+  // vertices form a square in 2d space
   float* data = new float[data_locations] {
     -0.5f, -0.5f, 0.0f,
     0.5f, -0.5f, 0.0f,
@@ -131,6 +133,7 @@ void plane::gen_vertex_data(mesh &plane_mesh) {
     0, 1, 2, 2, 3, 0
   };
 
+  // opengl bind vertex buffers for writing
   plane_mesh.write_begin();
   glEnableVertexAttribArray(0);
   glBufferData(GL_ARRAY_BUFFER, data_locations * sizeof(float), data,
@@ -141,9 +144,12 @@ void plane::gen_vertex_data(mesh &plane_mesh) {
   /* set the vertex attributes pointers */
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
 
+  // clean up data from heap
   delete[] tree;
   delete[] data;
+  // stop writing to vertex buffers
   plane_mesh.write_end();
+  // set the number of elements to draw
   plane_mesh.set_elements(vertices);
 }
 
@@ -151,9 +157,12 @@ glm::mat4 plane::model_matrix() const {
     glm::mat4 model = glm::mat4(1.0f);
     float rot = M_PI/2.0f;
     model = glm::translate(model, position);
+    // change model orientation to be flat horizontally in 3d space
     model = glm::rotate(model, rot, glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, rot, glm::vec3(1.0f, 0.0f, 0.0f));
+    // rotate
     model = glm::rotate(model, rotation, glm::vec3(1.0f, 0.0f, 0.0f));
+    // stretch to required length
     model = glm::scale(model, glm::vec3(1.2f, length, 1.0f));
     model = glm::scale(
         model, glm::vec3(1.0f)*m_scale);
@@ -174,6 +183,7 @@ void particle::gen_vertex_data(unsigned int nodes, mesh &particle_mesh) {
   float *data = new float[data_locations];
   float *d_p = data;
 
+  // top of the sphere
   *d_p++ = 0; // x
   *d_p++ = 1; // y
   *d_p++ = 0; // z
@@ -187,6 +197,7 @@ void particle::gen_vertex_data(unsigned int nodes, mesh &particle_mesh) {
       *d_p++ = sin(phi) * sin(theta); // z
     }
   }
+  // bottom of the sphere
   *d_p++ = 0;  // x
   *d_p++ = -1; // y
   *d_p++ = 0;  // z
@@ -225,22 +236,23 @@ void particle::gen_vertex_data(unsigned int nodes, mesh &particle_mesh) {
     }
   }
 
+  // write vertex data to buffers
   particle_mesh.write_begin();
   glEnableVertexAttribArray(0);
   glBufferData(GL_ARRAY_BUFFER, data_locations * sizeof(float), data,
                GL_STATIC_DRAW);
-  /* use the element array buffer to indicate which indices to draw */
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertices * 6 * sizeof(int), tree,
                GL_STATIC_DRAW);
-  /* set the vertex attributes pointers */
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
 
+  // clean up
   delete[] tree;
   delete[] data;
   particle_mesh.write_end();
   particle_mesh.set_elements(vertices*6);
 }
 
+// generates model matrix
 glm::mat4 particle::model_matrix() const {
   glm::mat4 model = glm::mat4(1.0f);
   model = glm::translate(model, position);
@@ -252,8 +264,4 @@ glm::mat4 particle::model_matrix() const {
 
 void particle::show() const {
   ImGui::SliderFloat("scale", (float *)&m_scale, 0.0f, 30.0f);
-}
-
-void particle::update(float delta) {
-  this->object::update(delta);
 }

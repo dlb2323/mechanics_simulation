@@ -151,28 +151,35 @@ int main() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+    // show gui
     GUI::show(env);
 
     // update
     env.update(delta.get_elapsed_time());
     environment::current_camera.update();
 
+    // timestamp before drawing the frame
     delta.begin();
 
     // draw
+    // set background colour
     glClearColor(0.529, 0.808, 0.98, 0.7);
+    // clear opengl buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+    // draw environment
     env.draw();
-    glStencilFunc(GL_ALWAYS, 0, 0xFF);
 
+    // render imgui
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+    // update the window with glfw
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 
+  // clean up data
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
@@ -181,6 +188,7 @@ int main() {
   exit(EXIT_SUCCESS);
 }
 
+// opengl error callback
 void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id,
                             GLenum severity, GLsizei length,
                             const char *message, const void *userParam) {
