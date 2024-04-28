@@ -131,7 +131,7 @@ void GUI::show(environment& env) {
                 tree_node<object*>* p_object_node = env.create(new particle(s_input, 7));
                 glm::vec3 pos(std::rand() % 100 - 50, std::rand() % 100 - 50,
                               std::rand() % 100 - 50);
-                p_object_node->get_data()->move_to(pos); 
+                // p_object_node->get_data()->move_to(pos); 
                 code++;
               }
             }
