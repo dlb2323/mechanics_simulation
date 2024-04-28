@@ -92,11 +92,10 @@ void GUI::show(environment& env) {
               //     break;
               if (!match) {
                 std::string s_input(input);
-                tree_node<object*>* p_object_node = env.create(new particle(s_input, 5));
-                p_object_node->get_data()->position =
-                    glm::vec3(std::rand() % 100 - 50, std::rand() % 100 - 50,
+                tree_node<object*>* p_object_node = env.create(new particle(s_input, 7));
+                glm::vec3 pos(std::rand() % 100 - 50, std::rand() % 100 - 50,
                               std::rand() % 100 - 50);
-                environment::current_camera.track(&p_object_node->get_data()->position);
+                p_object_node->get_data()->move_to(pos); 
                 code++;
               }
             }
@@ -164,11 +163,10 @@ void GUI::show(environment& env) {
               //     break;
               if (!match) {
                 std::string s_input(input);
-                tree_node<object*>* p_object_node = env.create(new particle(s_input, 3));
-                p_object_node->get_data()->position =
-                    glm::vec3(std::rand() % 100 - 50, std::rand() % 100 - 50,
+                tree_node<object*>* p_object_node = env.create(new plane(s_input, 7));
+                glm::vec3 pos(std::rand() % 100 - 50, std::rand() % 100 - 50,
                               std::rand() % 100 - 50);
-                environment::current_camera.track(&p_object_node->get_data()->position);
+                p_object_node->get_data()->move_to(pos); 
                 code++;
               }
             }
