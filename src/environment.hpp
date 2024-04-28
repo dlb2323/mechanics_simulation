@@ -92,22 +92,35 @@ public:
   glm::vec3 simulation_func();
   tree_node<object*>* create(object* object);
 
+  // pass in node to select
   void select(tree_node<object*>* node) {
-    selection = node;
+    // guard against unexpected null entries
+    if (node)
+      selection = node;
   }
+  // selection getter
   tree_node<object*>* get_selection() const { return selection; }; 
 
+  // deselect currently selected node
+  // if reselect is enabled, the first valid leaf from 
+  // the deselected node will be selected instead
   void deselect(bool reselect = false) {
+    // null guard
     if (selection) {
       tree_node<object*>* parent = selection->get_parent();
+      // nodes can only be reselected if a parent exists
       if (parent && reselect) {
         if(parent->get_child_count() > 1)
+          // parent has 2 or more leaf nodes
+          // pick the second leaf node if the first is the currently selected node
           select(parent->get_child(parent->get_child(0) == selection? 1 : 0));
         else
+          // parent has no valid leaves, so select parent instead
          select(parent);
         return;
       }
     }
+    // switch to a deselected state
     selection = NULL;
   }
 };
