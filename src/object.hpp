@@ -59,7 +59,7 @@ class object : public GUIitem {
   glm::vec3 m_start;
   glm::vec3 m_end;
   timestamp m_timestamp;
-  const double m_total_time = 0.45;
+  const double m_total_time = 0.2;
   enum MODE { STILL, ACTIVE };
   object::MODE m_mode;
 
@@ -87,21 +87,23 @@ public:
     m_end = location;
     m_mode = MODE::ACTIVE;
   };
+  virtual int get_type_code() const = 0;
 };
 
 class world : public object {
   glm::mat4 model_matrix() const override;
 public:
-  float friction;
   float distance;
+  float friction;
   world(mesh *mesh, float scale)
-      : object("world", mesh, scale) {}
+      : object("world", mesh, scale), distance(17.0f) {}
 
   void update(float delta) override;
 
   void draw(glm::mat4 &vp_matrix) const override;
   void draw(glm::mat4 &vp_matrix, float scale) const override;
   void show() const override;
+  int get_type_code() const override { return 0; };
 };
 
 class plane : public object {
@@ -114,6 +116,7 @@ public:
       : object(name, plane_mesh, scale), rotation(3*M_PI/8), length(3.0f) {}
   static void gen_vertex_data(mesh &mesh);
   void show() const override;
+  int get_type_code() const override { return 1; };
 };
 
 class particle : public object {
@@ -127,6 +130,7 @@ public:
 
   void update(float delta) override;
   void show() const override;
+  int get_type_code() const override { return 3; };
 };
 
 class point : public object {
@@ -135,6 +139,7 @@ public:
   point(std::string& name, float scale)
       : object(name, particle::particle_mesh, scale) {}
   void show() const override;
+  int get_type_code() const override { return 2; };
 };
 
 

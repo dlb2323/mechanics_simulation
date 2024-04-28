@@ -53,6 +53,16 @@ class environment {
   glm::mat4 proj;
   tree_node<object*>* selection;
 public:
+  typedef struct {
+    world* w;
+    point* point_a;
+    point* point_b;
+    plane* pl;
+    particle* pa;
+    float distance;
+    float friction;
+  } simulation;
+  simulation subjects;
   tree_node<object*>* objects;
   GLFWwindow *const window;
   static camera current_camera;
@@ -60,13 +70,14 @@ public:
   ~environment(); 
   void update(float delta);
   void draw();
+  bool is_simulation_legal();
   tree_node<object*>* create(object* object);
   // int object_count() const { return objects.size(); }
   // object *object_at(unsigned int idx) {
   //   return (idx < objects.size()) ? objects[idx] : NULL;
   // };
-  void select(tree_node<object*>* object) {
-    selection = object;
+  void select(tree_node<object*>* node) {
+    selection = node;
   }
   tree_node<object*>* get_selection() const { return selection; }; 
 

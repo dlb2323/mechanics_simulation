@@ -93,7 +93,7 @@ void world::update(float delta) {
 
 void world::show() const {
   ImGui::SliderFloat("friction", (float*)&friction, 0.0f, 4.0f);
-  ImGui::SliderFloat("distance", (float*)&distance, 1.0f, 7.0f);
+  ImGui::SliderFloat("distance", (float*)&distance, 1.0f, 70.0f);
 }
 
 // point
@@ -156,7 +156,7 @@ glm::mat4 plane::model_matrix() const {
 }
 
 void plane::show() const {
-  ImGui::SliderFloat("rotation", (float *)&rotation, 0.0f, 2.0f);
+  ImGui::SliderFloat("rotation", (float *)&rotation, 0.0f, M_PI);
 }
 
 // particle
