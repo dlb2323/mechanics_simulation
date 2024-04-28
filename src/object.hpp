@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include <random>
 #include "gui.hpp"
 #include "shader.hpp"
 
@@ -62,6 +62,7 @@ class object : public GUIitem {
   const double m_total_time = 0.2;
   enum MODE { STILL, ACTIVE };
   object::MODE m_mode;
+  glm::fvec3 m_colour;
 
 protected:
   mesh *m_mesh;
@@ -72,10 +73,10 @@ public:
   glm::vec3 position;
 
   object(std::string &name, mesh *mesh, float scale)
-      : GUIitem(name), m_mesh(mesh), m_scale(scale), m_mode(MODE::STILL), position(0.0f) {}
+      : GUIitem(name), m_mesh(mesh), m_scale(scale), m_mode(MODE::STILL), position(0.0f), m_colour((float)std::rand()/RAND_MAX, (float)std::rand()/RAND_MAX, (float)std::rand()/RAND_MAX) {}
 
   object(const char * name, mesh *mesh, float scale)
-      : GUIitem(name), m_mesh(mesh), m_scale(scale), m_mode(MODE::STILL), position(0.0f) {}
+      : GUIitem(name), m_mesh(mesh), m_scale(scale), m_mode(MODE::STILL), position(0.0f), m_colour((float)std::rand()/RAND_MAX, (float)std::rand()/RAND_MAX, (float)std::rand()/RAND_MAX){}
 
   void set_shader(shader *shader) const { m_mesh->set_shader(shader); };
   virtual void draw(glm::mat4 &vp_matrix) const; 
