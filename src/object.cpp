@@ -105,6 +105,7 @@ void world::show() const {
 }
 
 // point
+// generate point model matrix
 glm::mat4 point::model_matrix() const {
   glm::mat4 model = glm::mat4(1.0f);
   model = glm::translate(model, position);
