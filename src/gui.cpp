@@ -4,6 +4,16 @@
 
 GUI::STATE GUI::state;
 
+static object * create_particle(std::string& name) {
+ return new particle(name, 5); 
+}
+static object * create_point(std::string& name) {
+ return new particle(name, 5); 
+}
+static object * create_plane(std::string& name) {
+ return new particle(name, 5); 
+}
+
 void GUI::show(environment& env) {
   static bool no_titlebar = false;
   static bool no_scrollbar = false;
@@ -75,113 +85,60 @@ void GUI::show(environment& env) {
   ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
   if (ImGui::BeginTabBar("Objects", tab_bar_flags))
   {
-      if (ImGui::BeginTabItem("Particle"))
-      {
-          ImGui::Text("Add Particle");
-          const unsigned int input_text_charlen = 128;
-          {
-            static int code = 65;
-            char input[input_text_charlen] = {(char)code};
-            ImGui::InputText("particle name", input, IM_ARRAYSIZE(input));
-            if (ImGui::Button("create particle") && GUI::state != GUI::SIMULATE) {
-              std::string input_string(input);
+      auto tab_item = [](environment& env, std::string name,object* (*create_object)(std::string&)) {
+        if (ImGui::BeginTabItem(name.c_str()))
+        {
+            ImGui::Text((std::string("create ") + name).c_str());
+            {
+              static char input[128] = "A";
+              ImGui::InputText(" ", input, IM_ARRAYSIZE(input));
+              std::string s_input(input);
               bool match = false;
-              // auto itr = env.
-              //   if (env.object_at(i)->get_name() == input_string) {
-              //     match = true;
-              //     break;
-              if (!match) {
-                std::string s_input(input);
-                tree_node<object*>* p_object_node = env.create(new particle(s_input, 7));
-                glm::vec3 pos(std::rand() % 100 - 50, std::rand() % 100 - 50,
-                              std::rand() % 100 - 50);
-                p_object_node->get_data()->move_to(pos); 
-                code++;
+              if (env.get_selection())
+              {
+                auto traverse = env.get_selection()->get_traversal_state(traversal_state<object*>::PREORDER);
+                while(traverse.next()) {
+                  if (traverse.get_item()->get_name() == s_input) {
+                    match = true;
+                    break;
+                  }
+                }
+              } else {
+                auto traverse = env.objects->get_traversal_state(traversal_state<object*>::PREORDER);
+                while(traverse.next()) {
+                  if (traverse.get_item()->get_name() == s_input) {
+                    match = true;
+                    break;
+                  }
+                }
+              }
+              if (match) {
+                ImGui::SameLine(350.0f);
+                ImGui::Text("name conflict");
+              }
+              if (ImGui::Button((std::string("create ") + name).c_str()) && GUI::state != GUI::SIMULATE) {
+                if (!match) {
+                  tree_node<object*>* p_object_node = env.create(create_object(s_input));
+                  glm::vec3 pos(std::rand() % 100 - 50, std::rand() % 100 - 50,
+                                std::rand() % 100 - 50);
+                  p_object_node->get_data()->move_to(pos); 
+                }
+              }
+              ImGui::SameLine(364.0f);
+              if (ImGui::Button("remove object")) {
+                auto node = env.get_selection();
+                if (node && node->get_data()->get_name() != "world") {
+                  env.deselect(true);
+                  tree_node<object*>::destroy(node);
+                }
               }
             }
-            ImGui::SameLine(364.0f);
-            if (ImGui::Button("remove object")) {
-              auto node = env.get_selection();
-              if (node && node->get_data()->get_name() != "world") {
-                env.deselect(true);
-                tree_node<object*>::destroy(node);
-              }
-            }
-          }
+        }
+      ImGui::EndTabItem();
+    };
 
-          ImGui::EndTabItem();
-      }
-      if (ImGui::BeginTabItem("Point"))
-      {
-          ImGui::Text("Create Point");
-          const unsigned int input_text_charlen = 128;
-          {
-            static int code = 65;
-            char input[input_text_charlen] = {(char)code};
-            ImGui::InputText("particle name", input, IM_ARRAYSIZE(input));
-            if (ImGui::Button("create point") && GUI::state != GUI::SIMULATE) {
-              std::string input_string(input);
-              bool match = false;
-              // auto itr = env.
-              //   if (env.object_at(i)->get_name() == input_string) {
-              //     match = true;
-              //     break;
-              if (!match) {
-                std::string s_input(input);
-                tree_node<object*>* p_object_node = env.create(new particle(s_input, 7));
-                glm::vec3 pos(std::rand() % 100 - 50, std::rand() % 100 - 50,
-                              std::rand() % 100 - 50);
-                // p_object_node->get_data()->move_to(pos); 
-                code++;
-              }
-            }
-            ImGui::SameLine(364.0f);
-            if (ImGui::Button("remove object") && GUI::state != GUI::SIMULATE) {
-              auto node = env.get_selection();
-              if (node && node->get_data()->get_name() != "world") {
-                env.deselect(true);
-                tree_node<object*>::destroy(node);
-              }
-            }
-          }
-          ImGui::EndTabItem();
-      }
-      if (ImGui::BeginTabItem("Plane"))
-      {
-          ImGui::Text("Create Plane");
-          const unsigned int input_text_charlen = 128;
-          {
-            static int code = 65;
-            char input[input_text_charlen] = {(char)code};
-            ImGui::InputText("particle name", input, IM_ARRAYSIZE(input));
-            if (ImGui::Button("create plane") && GUI::state != GUI::SIMULATE) {
-              std::string input_string(input);
-              bool match = false;
-              // auto itr = env.
-              //   if (env.object_at(i)->get_name() == input_string) {
-              //     match = true;
-              //     break;
-              if (!match) {
-                std::string s_input(input);
-                tree_node<object*>* p_object_node = env.create(new plane(s_input, 7));
-                glm::vec3 pos(std::rand() % 100 - 50, std::rand() % 100 - 50,
-                              std::rand() % 100 - 50);
-                p_object_node->get_data()->move_to(pos); 
-                code++;
-              }
-            }
-            ImGui::SameLine(364.0f);
-            if (ImGui::Button("remove object") && GUI::state != GUI::SIMULATE) {
-              auto node = env.get_selection();
-              if (node && node->get_data()->get_name() != "world") {
-                env.deselect(true);
-                tree_node<object*>::destroy(node);
-              }
-            }
-          }
-          ImGui::EndTabItem();
-      }
-      ImGui::EndTabBar();
+    tab_item(env, "particle", create_particle);
+    ImGui::EndTabBar();
   }
   ImGui::Separator();
 

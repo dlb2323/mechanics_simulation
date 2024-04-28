@@ -39,9 +39,9 @@ void object::update(float delta) {
 }
 
 void object::draw(glm::mat4& vp_matrix) const {
-  if (selected) {
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-  }
+  // if (selected) {
+  //       glStencilFunc(GL_ALWAYS, 1, 0xFF);
+  // }
 
   m_mesh->bind();
   glm::mat4 mvp = vp_matrix * model_matrix();
@@ -52,15 +52,15 @@ void object::draw(glm::mat4& vp_matrix) const {
 
   m_mesh->unbind();
 
-  if (selected) {
-      glStencilFunc(GL_ALWAYS, 0, 0xFF);
-  }
+  // if (selected) {
+  //     glStencilFunc(GL_ALWAYS, 0, 0xFF);
+  // }
 }
 
 void object::draw(glm::mat4& vp_matrix, float scale) const {
-    if (selected) {
-      glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-    }
+    // if (selected) {
+    //   glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    // }
     shader* mesh_shader = m_mesh->get_shader();
     m_mesh->set_shader(shader::single_colour);
     m_mesh->bind();
@@ -74,9 +74,9 @@ void object::draw(glm::mat4& vp_matrix, float scale) const {
     m_mesh->draw();
     m_mesh->unbind();
     m_mesh->set_shader(mesh_shader);
-    if (selected) {
-      glStencilFunc(GL_ALWAYS, 0, 0xFF);
-    }
+    // if (selected) {
+    //   glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    // }
 }
 
 // world
@@ -145,19 +145,18 @@ void plane::gen_vertex_data(mesh &plane_mesh) {
 
 glm::mat4 plane::model_matrix() const {
     glm::mat4 model = glm::mat4(1.0f);
+    float y_rot = M_PI/2.0f;
     model = glm::translate(model, position);
+    model = glm::rotate(model, y_rot, glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, rotation, glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(1.2f, length, 1.0f));
     model = glm::scale(
         model, glm::vec3(1.0f)*m_scale);
     return model;
 }
 
 void plane::show() const {
-  ImGui::SliderFloat("scale", (float *)&m_scale, 0.0f, 30.0f);
   ImGui::SliderFloat("rotation", (float *)&rotation, 0.0f, 2.0f);
-  ImGui::InputFloat("positionx", (float *)&position.x);
-  ImGui::InputFloat("positiony", (float *)&position.y);
-  ImGui::InputFloat("positionz", (float *)&position.z);
 }
 
 // particle

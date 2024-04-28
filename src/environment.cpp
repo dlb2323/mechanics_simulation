@@ -99,14 +99,41 @@ void environment::draw() {
   glm::mat4 view = environment::current_camera.get_view_matrix();
   glm::mat4 vp_matrix = offset * proj * view;
 
-  auto itr = objects->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
-  while(itr.next()) {
-    itr.get_item()->draw(vp_matrix);
+  {
+    auto itr = objects->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
+    if (selection) {
+      while(itr.next()) {
+          // messy
+          if (itr.get_item() == selection->get_data()) {
+            itr.leave_branch();
+            continue;
+          }
+          itr.get_item()->draw(vp_matrix);
+      }
+    } else {
+      while(itr.next()) {
+          itr.get_item()->draw(vp_matrix);
+      }
+    }
   }
 
   if (selection) {
-      glDisable(GL_DEPTH_TEST);
-      selection->get_data()->draw(vp_matrix, 1.1f);
-      glEnable(GL_DEPTH_TEST);
+      glStencilFunc(GL_ALWAYS, 1, 0xFF);
+      {
+        auto itr = selection->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
+        while(itr.next()) {
+          itr.get_item()->draw(vp_matrix);
+        }
+      }
+      glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+      {
+        glDisable(GL_DEPTH_TEST);
+        auto itr = selection->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
+        while(itr.next()) {
+          itr.get_item()->draw(vp_matrix, 1.1f);
+        }
+        glEnable(GL_DEPTH_TEST);
+      }
+      glStencilFunc(GL_ALWAYS, 0, 0xFF);
   }
 }

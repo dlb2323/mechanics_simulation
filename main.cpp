@@ -129,9 +129,10 @@ int main() {
   // auto c2 = c1->get_child(0);
   // for (int i = 0; i < 4; i++)
   //   c2->insert_node(tree_node<int>::create_new(count++));
-  // auto t = rootl->get_traversal_state(traversal_state<int>::MODE::INORDER);
+  // auto t = rootl->get_traversal_state(traversal_state<int>::MODE::PREORDER);
   // while(t.next())
   //   std::cout << t.get_item() << std::endl;
+  // std::cin.get();
 
 
   // load data

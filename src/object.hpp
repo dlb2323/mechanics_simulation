@@ -81,8 +81,6 @@ public:
   virtual void draw(glm::mat4 &vp_matrix) const; 
   virtual void draw(glm::mat4 &vp_matrix, float scale) const;
   virtual void update(float delta);
-  void select() { selected = true; };
-  void deselect() { selected = false; };
   void move_to(glm::vec3 location) {
     m_timestamp.begin();
     m_start = position;
@@ -110,9 +108,10 @@ class plane : public object {
   glm::mat4 model_matrix() const override;
 public:
   float rotation;
+  float length;
   static mesh* plane_mesh;
   plane(std::string& name, float scale)
-      : object(name, plane_mesh, scale), rotation(0.0f) {}
+      : object(name, plane_mesh, scale), rotation(3*M_PI/8), length(3.0f) {}
   static void gen_vertex_data(mesh &mesh);
   void show() const override;
 };
