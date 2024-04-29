@@ -5,6 +5,8 @@
 
 GUI::STATE GUI::state;
 
+// object creation functions
+// called by buttons
 static object * create_particle(std::string& name) {
  return new particle(name, 3); 
 }
@@ -17,7 +19,10 @@ static object * create_plane(std::string& name) {
  return new plane(name, 30); 
 }
 
+// show the main gui tree
+// requires environment data
 void GUI::show(environment& env) {
+  // window options
   static bool no_titlebar = false;
   static bool no_scrollbar = false;
   static bool no_menu = false;
@@ -51,30 +56,36 @@ void GUI::show(environment& env) {
     window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
   if (unsaved_document)
     window_flags |= ImGuiWindowFlags_UnsavedDocument;
-  // We specify a default position/size in case there's no data in the .ini
-  // file. We only do it to make the demo applications a little more welcoming,
-  // but typically this isn't required.
+
+  // find window width and height
   int width, height;
   glfwGetFramebufferSize(env.window, &width, &height);
   GLFWmonitor* monitor = glfwGetWindowMonitor(env.window);
   if (monitor) {
+    // find screen width and height if fullscreen
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
     height = mode->height;
   }
+  // set window position
   const ImGuiViewport *main_viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
   ImGui::SetNextWindowSize(ImVec2(500, height), ImGuiCond_Always);
 
-  // Main body of the Demo window starts here.
-  if (!ImGui::Begin("Mechanics Simulation Window", NULL, window_flags)) {
+  // Main body of the window starts here.
+  if (!ImGui::Begin("Mechanics Simulation", NULL, window_flags)) {
     // Early out if the window is collapsed, as an optimization.
     ImGui::End();
     return;
   }
   
+  // simulation start button
+  // button text reflects gui state
+  // activates only if there is a legal simulation
   if (ImGui::Button((GUI::state == GUI::EDIT ? "Start" : "Stop"), ImVec2(100, 30)) && env.is_simulation_legal()) {
+      // update gui state
       GUI::state = GUI::state == GUI::EDIT ? GUI::SIMULATE : GUI::EDIT;
       if (GUI::state == GUI::SIMULATE) {
+        // start simulation if in simulation state
         env.simulation_start();
       }
   }
@@ -83,14 +94,15 @@ void GUI::show(environment& env) {
     ImGui::Text("Simulating, GUI locked");
   }
 
-  // camera
-  // implement scroll wheel zoom!
+  // camera zoom slider
   ImGui::SliderFloat("zoom", &environment::current_camera.zoom,
                      0.0f, 20.0f, "%.4f");
 
+  // object spawn tabs
   ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
   if (ImGui::BeginTabBar("Objects", tab_bar_flags))
   {
+      // lambda function to create a tab item
       auto tab_item = [](environment& env, std::string name,object* (*create_object)(std::string&)) {
         if (ImGui::BeginTabItem(name.c_str()))
         {
@@ -99,23 +111,19 @@ void GUI::show(environment& env) {
               static char input[128] = "A";
               ImGui::InputText(" ", input, IM_ARRAYSIZE(input));
               std::string s_input(input);
+              // find nodes with duplicate names
               bool match = false;
+              tree_node<object*>* node = env.objects;
               if (env.get_selection())
-              {
-                auto traverse = env.get_selection()->get_traversal_state(traversal_state<object*>::PREORDER);
-                while(traverse.next()) {
-                  if (traverse.get_item()->get_name() == s_input) {
-                    match = true;
-                    break;
-                  }
-                }
-              } else {
-                auto traverse = env.objects->get_traversal_state(traversal_state<object*>::PREORDER);
-                while(traverse.next()) {
-                  if (traverse.get_item()->get_name() == s_input) {
-                    match = true;
-                    break;
-                  }
+                // iterate selection if it exists
+                node = env.get_selection(); 
+              auto traverse = env.objects->get_traversal_state(traversal_state<object*>::PREORDER);
+              // iterate nodes
+              while(traverse.next()) {
+                if (traverse.get_item()->get_name() == s_input) {
+                  // break if match is found 
+                  match = true;
+                  break;
                 }
               }
               if (match) {
@@ -124,6 +132,9 @@ void GUI::show(environment& env) {
               }
               static int count = 1;
               ImGui::InputInt("count", &count);
+              // create 'count' objects and add them to gui tree at 'node'
+              // used to spawn multiple objects in one command
+              // does not activate while simulating
               if (ImGui::Button((std::string("create ") + name).c_str()) && GUI::state != GUI::SIMULATE) {
                 for (int i = 0; i < count; i++) {
                   std::string s_alt = s_input;
@@ -135,9 +146,12 @@ void GUI::show(environment& env) {
                 }
               }
               ImGui::SameLine(364.0f);
+              // remove selected node and its children from gui tree
+              // does not activate while simulating
               if (ImGui::Button("remove object") && GUI::state != GUI::SIMULATE) {
                 auto node = env.get_selection();
                 if (node && node->get_data()->get_name() != "world") {
+                  // cannot delete root node world 
                   env.deselect(true);
                   tree_node<object*>::destroy(node);
                 }
@@ -147,6 +161,8 @@ void GUI::show(environment& env) {
         }
     };
 
+    // dynamically generate tab items for each object class
+    // links creation functions
     tab_item(env, "particle", create_particle);
     tab_item(env, "point", create_point);
     tab_item(env, "plane", create_plane);
@@ -157,11 +173,14 @@ void GUI::show(environment& env) {
   // objects 
   ImGui::Spacing();
   if (GUI::state == GUI::EDIT){
+      // in gui state edit, create a child menu to display the object tree
       ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
       ImGui::BeginChild("Objects", ImVec2(ImGui::GetContentRegionAvail().x, 500), ImGuiChildFlags_None, window_flags);
+      // recursively show object tree entries
       GUI::show_object_tree(env.objects, env);
       ImGui::EndChild();
   } else {
+    // in gui state simulate, calculate and show simulation data
     float a = (env.subjects.w->force-env.subjects.w->mass*env.subjects.w->gravity*sin(env.subjects.pl->rotation))/env.subjects.w->mass;
     float r = (
       ((env.subjects.w->force - env.subjects.w->mass*env.subjects.w->gravity
@@ -176,45 +195,42 @@ void GUI::show(environment& env) {
 
   ImGui::Spacing();
   ImGui::Separator();
+  // subheading at the bottom shows selection options
   if (env.get_selection()) {
     env.get_selection()->get_data()->show();
   }
 
-  // GUI::help();
-
   ImGui::End();
 }
 
+// recursive function that implements the gui tree 
+// post order traversal
 void GUI::show_object_tree(tree_node<object*>* object, environment& env) {
+  // tree node options
   ImGuiTreeNodeFlags base_flags =
            ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
            ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_SpanAllColumns;
   ImGuiTreeNodeFlags node_flags = base_flags;
   ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+  // highlight selected node
   if (object == env.get_selection())
       node_flags |= ImGuiTreeNodeFlags_Selected;
 
+  // create tree node for object
   if (ImGui::TreeNodeEx((void*)(intptr_t)object, node_flags, object->get_data()->get_name().c_str()))
   {
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+      // selects object when clicked and not toggling the arrow
       env.select(object);
       environment::current_camera.focus(object->get_data()->position);
     }
-    // object->get_data()->show();
-    // ImGui::Separator();
+    // recurse for each child
     for (int i = 0; i < object->get_child_count(); i++)
       GUI::show_object_tree(object->get_child(i), env);
     ImGui::TreePop();
   }
 }
 
-void GUI::help() {
-  if (ImGui::CollapsingHeader("Help")) {
-  }
-}
-
-void GUI::particle_options(std::string name) {
-}
 // GUIitem
 void GUIitem::show() const {
 }

@@ -138,6 +138,10 @@ glm::vec3 environment::simulation_func() {
   // to obtain the displacement as a vector.
   // this displacement is scaled by the particle's radius to give a more intuitive
   // 'unit' vector
+  if (subjects.w->distance < 0) 
+    // if distance is negative, the offset vector will face the wrong direction
+    // reverse r to correct this
+    r*=-1;
   return position - glm::normalize(offset)*r*subjects.pa->get_radius();
 }
 
