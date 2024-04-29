@@ -121,47 +121,57 @@ void environment::update(float delta) {
 }
 
 glm::vec3 environment::simulation_func() {
-  float l = subjects.w->distance;
+  // calculate start position
   glm::mat4 t(1.0f);
   t = glm::rotate(t, (subjects.pl->rotation), glm::vec3(0.0f, 0.0f, -1.0f));
-  t = glm::translate(t, glm::vec3(l, 0.0f, 0.0f));
+  t = glm::translate(t, glm::vec3(subjects.w->distance, 0.0f, 0.0f));
   glm::vec3 offset = t[3];
   glm::vec3 position = offset+glm::vec3(0.0f, 10.0f, 0.0f); 
+  // calculate displacement parallel to the plane
   float r = (
     ((subjects.w->force - subjects.w->mass*subjects.w->gravity
     *sin(subjects.pl->rotation)))
     /2*subjects.w->mass)
     *subjects.time.get_elapsed_time()*subjects.time.get_elapsed_time() 
     + subjects.w->u_velocity*subjects.time.get_elapsed_time();
+  // since 'offset' is alreadly parallel to the plane, it normalised and scaled by r
+  // to obtain the displacement as a vector.
+  // this displacement is scaled by the particle's radius to give a more intuitive
+  // 'unit' vector
   return position - glm::normalize(offset)*r*subjects.pa->get_radius();
 }
 
 void environment::simulation_start() {
+    // deselect any selections
     deselect();
+    // track particle
     current_camera.track(&subjects.pa->position);
+    // set timestamp 
     subjects.time.begin();
+    // snap plane to starting position in case it was not already there
     subjects.pl->position = glm::vec3(0.0f, 0.0f, 0.0f);
-    float l = subjects.w->distance;
-    // subjects.pl->length = l/15;
-    glm::mat4 t(1.0f);
-    t = glm::rotate(t, (subjects.pl->rotation), glm::vec3(0.0f, 0.0f, -1.0f));
-    t = glm::translate(t, glm::vec3(l, 0.0f, 0.0f));
-    glm::vec3 offset = t[3];
-    subjects.pa->position = offset+glm::vec3(0.0f, 10.0f, 0.0f);
 }
 
-tree_node<object*>* environment::create(object* o) {
+// creates a new branch from an object and adds it to the tree 
+void environment::create(object* o) {
+  // random vector displacement to give a scattering effect
   glm::vec3 pos(std::rand() % 100 - 50, std::rand() % 100 - 50,
               std::rand() % 100 - 50);
+  // create tree node from object
   tree_node<object*>* node = tree_node<object*>::create_new(o);
+  // if a node is selected, add branch as a leaf of this node
   if (selection) {
     selection->insert_node(node);
+    // translate object to selection position
+    // updates destination with selection position
+    // changes scatter source to selection
     glm::vec3 select_pos = selection->get_data()->position;
     pos += select_pos;
     o->position = select_pos;
   } else
     objects->insert_node(node);
   o->move_to(pos); 
+  // add to object to simulation state based on type
   switch (o->get_type_code()) {
     case 1:
       if (!subjects.pl)
@@ -174,35 +184,42 @@ tree_node<object*>* environment::create(object* o) {
     default:
     break;
   }
-  return node;
 }
 
+// check if a simulation is possible given the simulation state
 bool environment::is_simulation_legal() {
+  // simulation is legal if none of the objects are NULL
   return subjects.w && subjects.pl && subjects.pa;
 }
 
+// draw environment
+// draws object tree
 void environment::draw() {
+  // get window width and height
   int width, height;
   glfwGetFramebufferSize(window, &width, &height);
   GLFWmonitor* monitor = glfwGetWindowMonitor(window);
   if (monitor) {
+    // get screen dimensions if fullscreen
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
     width = mode->width;
     height = mode->height;
   }
-  proj =
-      glm::perspective((float)(M_PI / 4), (float)width / height, 0.1f, 300.0f);
-  // shift centre
+  // update projection matrix for draw phase
+  proj = glm::perspective((float)(M_PI / 4), (float)width / height, 0.1f, 300.0f);
+  // shift screen 'centre' to account for gui
   float of = (float)(((500.0 + (width-500.0)/2.0)-width/2.0)/(width/2.0));
   glm::mat4 offset = glm::translate(glm::mat4(1.0f), glm::vec3(of, 0.0f, 0.0f));
   glm::mat4 view = environment::current_camera.get_view_matrix();
+  // view projection matrix
   glm::mat4 vp_matrix = offset * proj * view;
 
   {
+    // traverse tree in preorder mode to skip branches if necessary
     auto itr = objects->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
     if (selection) {
       while(itr.next()) {
-          // messy
+          // if nodes are selected, skip them for now 
           if (itr.get_item() == selection->get_data()) {
             itr.leave_branch();
             continue;
@@ -210,6 +227,7 @@ void environment::draw() {
           itr.get_item()->draw(vp_matrix);
       }
     } else {
+      // draw tree completely 
       while(itr.next()) {
           itr.get_item()->draw(vp_matrix);
       }
@@ -217,8 +235,10 @@ void environment::draw() {
   }
 
   if (selection) {
+      // TODO 
       glStencilFunc(GL_ALWAYS, 1, 0xFF);
       {
+        // draw skipped nodes with updated stencil state
         auto itr = selection->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
         while(itr.next()) {
           itr.get_item()->draw(vp_matrix);
@@ -226,9 +246,11 @@ void environment::draw() {
       }
       glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
       {
+        // disable depth testing for outlines
         glDisable(GL_DEPTH_TEST);
         auto itr = selection->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
         while(itr.next()) {
+          // draw outlines scaled 
           itr.get_item()->draw(vp_matrix, 1.1f);
         }
         glEnable(GL_DEPTH_TEST);

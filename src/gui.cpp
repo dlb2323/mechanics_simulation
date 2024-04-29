@@ -130,7 +130,7 @@ void GUI::show(environment& env) {
                   if (i != 0)
                     s_alt += std::to_string(i);
                   if (!match) {
-                    tree_node<object*>* p_object_node = env.create(create_object(s_alt));
+                     env.create(create_object(s_alt));
                   }
                 }
               }

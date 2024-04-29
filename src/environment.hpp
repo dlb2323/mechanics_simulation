@@ -87,10 +87,10 @@ public:
 
   void update(float delta);
   void draw();
+  void create(object* object);
   bool is_simulation_legal();
   void simulation_start();
   glm::vec3 simulation_func();
-  tree_node<object*>* create(object* object);
 
   // pass in node to select
   void select(tree_node<object*>* node) {
