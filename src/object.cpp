@@ -1,4 +1,5 @@
 #include "object.hpp"
+#include "simulation.hpp"
 #include <cmath>
 void mesh::bind() {
   // bind shader and vertex array buffer for drawing
@@ -94,6 +95,12 @@ glm::mat4 world::model_matrix() const {
 // disable drawing
 void world::draw(glm::mat4 &vp_matrix) const {};
 void world::draw(glm::mat4 &vp_matrix, float scale) const {};
+
+void world::update(float delta) {
+  if (GUI::get_state() == GUI::SIMULATE) {
+    current_simulation.update();
+  }
+}
 
 void world::show() const {
   // display simulation options with imgui

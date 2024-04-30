@@ -98,62 +98,26 @@ void environment::update(float delta) {
   while(itr.next()) {
     itr.get_item()->update(delta);
   }
-  if (is_simulation_legal()) {
-    // update simulation state, if all simulation objects are present
-    // move plane to zero vector
-    subjects.pl->move_to(glm::vec3(0.0f, 0.0f, 0.0f));
-    // using matrix transformations to obtain a vector on the line parallel to the plane
-    // create matrix t to perform rotations 
-    glm::mat4 t(1.0f);
-    // rotate t parallel to the plane
-    t = glm::rotate(t, (subjects.pl->rotation), glm::vec3(0.0f, 0.0f, -1.0f));
-    // translate a distance across the plane 
-    t = glm::translate(t, glm::vec3(subjects.w->distance, 0.0f, 0.0f));
-    // take the resultant position of the matrix 
-    glm::vec3 offset = t[3];
-    // move to this position with an extra offset to appear above the plane
-    subjects.pa->move_to(offset+glm::vec3(0.0f, 10.0f, 0.0f));
-  }
-  if (GUI::get_state() == GUI::SIMULATE) {
-    // update particle position when simulating
-    subjects.pa->position = simulation_func();
-  }
-}
-
-glm::vec3 environment::simulation_func() {
-  // calculate start position
-  glm::mat4 t(1.0f);
-  t = glm::rotate(t, (subjects.pl->rotation), glm::vec3(0.0f, 0.0f, -1.0f));
-  t = glm::translate(t, glm::vec3(subjects.w->distance, 0.0f, 0.0f));
-  glm::vec3 offset = t[3];
-  glm::vec3 position = offset+glm::vec3(0.0f, 10.0f, 0.0f); 
-  // calculate displacement parallel to the plane
-  float r = (
-    ((subjects.w->force - subjects.w->mass*subjects.w->gravity
-    *sin(subjects.pl->rotation)))
-    /2*subjects.w->mass)
-    *subjects.time.get_elapsed_time()*subjects.time.get_elapsed_time() 
-    + subjects.w->u_velocity*subjects.time.get_elapsed_time();
-  // since 'offset' is alreadly parallel to the plane, it normalised and scaled by r
-  // to obtain the displacement as a vector.
-  // this displacement is scaled by the particle's radius to give a more intuitive
-  // 'unit' vector
-  if (subjects.w->distance < 0) 
-    // if distance is negative, the offset vector will face the wrong direction
-    // reverse r to correct this
-    r*=-1;
-  return position - glm::normalize(offset)*r*subjects.pa->get_radius();
-}
-
-void environment::simulation_start() {
-    // deselect any selections
-    deselect();
-    // track particle
-    current_camera.track(&subjects.pa->position);
-    // set timestamp 
-    subjects.time.begin();
-    // snap plane to starting position in case it was not already there
-    subjects.pl->position = glm::vec3(0.0f, 0.0f, 0.0f);
+  // if (is_simulation_legal()) {
+  //   // update simulation state, if all simulation objects are present
+  //   // move plane to zero vector
+  //   subjects.pl->move_to(glm::vec3(0.0f, 0.0f, 0.0f));
+  //   // using matrix transformations to obtain a vector on the line parallel to the plane
+  //   // create matrix t to perform rotations 
+  //   glm::mat4 t(1.0f);
+  //   // rotate t parallel to the plane
+  //   t = glm::rotate(t, (subjects.pl->rotation), glm::vec3(0.0f, 0.0f, -1.0f));
+  //   // translate a distance across the plane 
+  //   t = glm::translate(t, glm::vec3(subjects.w->distance, 0.0f, 0.0f));
+  //   // take the resultant position of the matrix 
+  //   glm::vec3 offset = t[3];
+  //   // move to this position with an extra offset to appear above the plane
+  //   subjects.pa->move_to(offset+glm::vec3(0.0f, 10.0f, 0.0f));
+  // }
+  // if (GUI::get_state() == GUI::SIMULATE) {
+  //   // update particle position when simulating
+  //   subjects.pa->position = simulation_func();
+  // }
 }
 
 // creates a new branch from an object and adds it to the tree 
@@ -165,6 +129,8 @@ void environment::create(object* o) {
   tree_node<object*>* node = tree_node<object*>::create_new(o);
   // if a node is selected, add branch as a leaf of this node
   if (selection) {
+    if (node->get_parent()->get_data()->get_type_code() == 0)
+      static_cast<world*>(node->get_parent()->get_data())->child
     selection->insert_node(node);
     // translate object to selection position
     // updates destination with selection position

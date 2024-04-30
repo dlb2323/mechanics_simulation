@@ -1,5 +1,5 @@
-#ifndef SPHERE_H
-#define SPHERE_H
+#ifndef OBJECT_H 
+#define OBJECT_H
 
 #include <chrono>
 #include <glm/glm.hpp>
@@ -112,9 +112,13 @@ public:
   virtual int get_type_code() const = 0;
 };
 
+class simulation;
+class no_simulation;
+
 // world class, inherits object, stands at the top of the node tree
 class world : public object {
   glm::mat4 model_matrix() const override;
+  simulation current_simulation;
 public:
   // simulation data
   float distance;
@@ -129,14 +133,18 @@ public:
         force(1.0f),
         gravity(9.8f),
         mass(1.0f),
-        u_velocity(0.0f)
+        u_velocity(0.0f),
+        current_simulation(no_simulation())
   {}
 
+  void child_added(object* child);
+  void child_removed();
   // override draw functions to disable drawing
   void draw(glm::mat4 &vp_matrix) const override;
   void draw(glm::mat4 &vp_matrix, float scale) const override;
   void show() const override;
   int get_type_code() const override { return 0; };
+  void update(float delta) override;
 };
 
 class plane : public object {
@@ -177,4 +185,4 @@ public:
 };
 
 
-#endif // !SPHERE_H
+#endif // !OBJECT_H
