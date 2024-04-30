@@ -8,22 +8,16 @@
 #include <random>
 #include "gui.hpp"
 #include "shader.hpp"
+#include "simulation.hpp"
+#include "utils.h"
 
-// simple class to hold a point in time for reference
-class timestamp {
-  std::chrono::time_point<std::chrono::system_clock> start;
-public:
-  timestamp() {}
-  // update time reference point 
-  void begin() { start = std::chrono::system_clock::now(); }
-  // get time in seconds since last reference point 
-  double get_elapsed_time() {
-    return ((std::chrono::duration<double>)(std::chrono::system_clock::now() - start)).count();
-  }
-};
 
 // linear interpolate between two vectors
-inline glm::vec3 lerp(glm::vec3 x, glm::vec3 y, float t) {
+inline glm::vec3 lerp3f(glm::vec3 x, glm::vec3 y, float t) {
+  return x * (1.f - t) + y * t;
+}
+
+inline float lerp1f(float x, float y, float t) {
   return x * (1.f - t) + y * t;
 }
 
@@ -38,6 +32,7 @@ class mesh {
   unsigned int m_VAO;
   unsigned int m_VBO;
   unsigned int m_EBO;
+protected:
   unsigned int m_elements;
 
 public:
@@ -60,7 +55,11 @@ public:
   void unbind();
   void write_begin();
   void write_end();
-  void draw();
+  virtual void draw();
+};
+
+class line_mesh : public mesh {
+  void draw() override;
 };
 
 // inherit GUI functionality
@@ -85,11 +84,11 @@ public:
   glm::vec3 position;
 
   // initialise defaults, random colour
-  object(std::string &name, mesh *mesh, float scale)
-      : GUIitem(name), m_mesh(mesh), m_scale(scale), m_mode(MODE::STILL), position(0.0f), m_colour((float)std::rand()/RAND_MAX, (float)std::rand()/RAND_MAX, (float)std::rand()/RAND_MAX) {}
+  object(std::string &name, mesh *mesh, float scale, glm::vec3 col = glm::vec3((float)std::rand()/RAND_MAX, (float)std::rand()/RAND_MAX, (float)std::rand()/RAND_MAX))
+      : GUIitem(name), m_mesh(mesh), m_scale(scale), m_mode(MODE::STILL), position(0.0f), m_colour(col) {}
 
-  object(const char * name, mesh *mesh, float scale)
-      : GUIitem(name), m_mesh(mesh), m_scale(scale), m_mode(MODE::STILL), position(0.0f), m_colour((float)std::rand()/RAND_MAX, (float)std::rand()/RAND_MAX, (float)std::rand()/RAND_MAX){}
+  object(const char * name, mesh *mesh, float scale, glm::vec3 col = glm::vec3((float)std::rand()/RAND_MAX, (float)std::rand()/RAND_MAX, (float)std::rand()/RAND_MAX))
+      : GUIitem(name), m_mesh(mesh), m_scale(scale), m_mode(MODE::STILL), position(0.0f), m_colour(col) {}
 
   // swap to another shader
   void set_shader(shader *shader) const { m_mesh->set_shader(shader); };
@@ -112,13 +111,26 @@ public:
   virtual int get_type_code() const = 0;
 };
 
-class simulation;
-class no_simulation;
+// root node for tree
+class root : public object {
+protected:
+  glm::mat4 model_matrix() const override { return glm::mat4(1.0f); };
+public:
+  root() : object("root", NULL, 0.0f) {}
+  void draw(glm::mat4 &vp_matrix) const override {};
+  void draw(glm::mat4 &vp_matrix, float scale) const override {};
+  int get_type_code() const override { return -1; };
+};
 
 // world class, inherits object, stands at the top of the node tree
 class world : public object {
+  struct {
+    particle* pa;
+    plane* pl;
+  } simulation_objects;
   glm::mat4 model_matrix() const override;
-  simulation current_simulation;
+  simulation* current_simulation;
+
 public:
   // simulation data
   float distance;
@@ -127,21 +139,34 @@ public:
   float gravity;
   float mass;
   float u_velocity;
-  world(mesh *mesh, float scale)
-      : object("world", mesh, scale), distance(1.0f),
+  world(std::string& name, float scale)
+      : object(name, NULL, scale), 
+        distance(1.0f),
         friction(0.0f),
         force(1.0f),
         gravity(9.8f),
         mass(1.0f),
-        u_velocity(0.0f),
-        current_simulation(no_simulation())
-  {}
+        u_velocity(0.0f)
+  { simulation_objects = {NULL, NULL}; }
+  ~world() { delete current_simulation; }
 
+  void start_simulation() { DEBUG_TEXT("world initiating simulation");
+    current_simulation->start(); };
   void child_added(object* child);
-  void child_removed();
+  void child_removed(object* child);
+  bool create_simulation();
+
   // override draw functions to disable drawing
-  void draw(glm::mat4 &vp_matrix) const override;
-  void draw(glm::mat4 &vp_matrix, float scale) const override;
+  bool can_simulate() const { return current_simulation != NULL; } 
+
+  static void reset_simulation(GUIitem* world) { 
+    if (static_cast<class world*>(world)->current_simulation) { 
+      static_cast<class world*>(world)->current_simulation->reset(); 
+    }
+  }
+
+  void draw(glm::mat4 &vp_matrix) const override {};
+  void draw(glm::mat4 &vp_matrix, float scale) const override {};
   void show() const override;
   int get_type_code() const override { return 0; };
   void update(float delta) override;
@@ -166,7 +191,7 @@ class particle : public object {
 public:
   static mesh* particle_mesh;
   particle(std::string &name, float scale)
-      : object(name, particle_mesh, scale) {}
+      : object(name, particle_mesh, scale, glm::vec3(0.0f, 0.0f, 1.0f)) {}
   static void gen_vertex_data(unsigned int nodes, mesh &mesh);
   // get radius size
   float get_radius() const { return m_scale; };

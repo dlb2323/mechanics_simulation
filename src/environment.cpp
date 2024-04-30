@@ -1,6 +1,7 @@
 #include "environment.hpp"
 #include "tree.hpp"
 #include "object.hpp"
+#include "utils.h"
 
 
 // camera
@@ -34,11 +35,12 @@ void camera::track(glm::vec3 *target) {
 // camera update function, called every frame
 void camera::update() {
   // switch state
+  m_zoom = lerp1f(m_zoom, zoom, 0.9f);
   switch (m_mode) {
   case camera::MODE::FOCUS: {
     // take the proportion of time left and smooth it
     // linear interpolate the result to get the position between the start and end points
-    m_position = lerp(m_start, m_focus_point, smooth(m_timestamp.get_elapsed_time() / m_total_time));
+    m_position = lerp3f(m_start, m_focus_point, smooth(m_timestamp.get_elapsed_time() / m_total_time));
     if (m_timestamp.get_elapsed_time() > m_total_time) {
       // snap to end point, exit focus state
       m_position = m_focus_point;
@@ -56,7 +58,7 @@ void camera::update() {
         m_position = *m_p_target;
       } else {
         // linear interpolate between start and target position
-        m_position = lerp(m_start, *m_p_target, smooth(m_timestamp.get_elapsed_time() / m_total_time));
+        m_position = lerp3f(m_start, *m_p_target, smooth(m_timestamp.get_elapsed_time() / m_total_time));
       }
     }
     break;
@@ -71,12 +73,9 @@ void camera::update() {
 // environment constructor
 environment::environment(GLFWwindow *window)
     : window(window) {
-  // initialise world, plane, and particle pointers to NULL state
-  subjects = {NULL, NULL, NULL};
   // initialise root node to type world 
-  objects = tree_node<object*>::create_new(new world(plane::plane_mesh, 1.0f));
+  objects = tree_node<object*>::create_new(new root());
   // pass world to simulation data
-  subjects.w = (world*)objects->get_data();
   // initialise selection to NULL state
   selection = NULL;
 }
@@ -98,26 +97,11 @@ void environment::update(float delta) {
   while(itr.next()) {
     itr.get_item()->update(delta);
   }
-  // if (is_simulation_legal()) {
-  //   // update simulation state, if all simulation objects are present
-  //   // move plane to zero vector
-  //   subjects.pl->move_to(glm::vec3(0.0f, 0.0f, 0.0f));
-  //   // using matrix transformations to obtain a vector on the line parallel to the plane
-  //   // create matrix t to perform rotations 
-  //   glm::mat4 t(1.0f);
-  //   // rotate t parallel to the plane
-  //   t = glm::rotate(t, (subjects.pl->rotation), glm::vec3(0.0f, 0.0f, -1.0f));
-  //   // translate a distance across the plane 
-  //   t = glm::translate(t, glm::vec3(subjects.w->distance, 0.0f, 0.0f));
-  //   // take the resultant position of the matrix 
-  //   glm::vec3 offset = t[3];
-  //   // move to this position with an extra offset to appear above the plane
-  //   subjects.pa->move_to(offset+glm::vec3(0.0f, 10.0f, 0.0f));
-  // }
-  // if (GUI::get_state() == GUI::SIMULATE) {
-  //   // update particle position when simulating
-  //   subjects.pa->position = simulation_func();
-  // }
+}
+
+void environment::simulation_start() {
+  DEBUG_TEXT("simulation started")
+  static_cast<world*>(selection->get_data())->start_simulation();
 }
 
 // creates a new branch from an object and adds it to the tree 
@@ -129,8 +113,6 @@ void environment::create(object* o) {
   tree_node<object*>* node = tree_node<object*>::create_new(o);
   // if a node is selected, add branch as a leaf of this node
   if (selection) {
-    if (node->get_parent()->get_data()->get_type_code() == 0)
-      static_cast<world*>(node->get_parent()->get_data())->child
     selection->insert_node(node);
     // translate object to selection position
     // updates destination with selection position
@@ -138,28 +120,30 @@ void environment::create(object* o) {
     glm::vec3 select_pos = selection->get_data()->position;
     pos += select_pos;
     o->position = select_pos;
-  } else
+  } else {
     objects->insert_node(node);
-  o->move_to(pos); 
-  // add to object to simulation state based on type
-  switch (o->get_type_code()) {
-    case 1:
-      if (!subjects.pl)
-        subjects.pl = (plane*)o;
-      break;
-    case 3:
-      if (!subjects.pa)
-        subjects.pa = (particle*)o;
-    case 0:
-    default:
-    break;
   }
+  o->move_to(pos); 
+  if (selection && selection->get_data()->get_type_code() == 0) {
+    static_cast<world*>(selection->get_data())->child_added(o);
+  }
+}
+
+void environment::remove(tree_node<object*>* node) {
+  if (node->get_parent()) {
+    if (node->get_parent()->get_data()->get_type_code() == 0)
+      static_cast<world*>(node->get_parent()->get_data())->child_removed(node->get_data());
+  }
+  tree_node<object*>::destroy(node);
 }
 
 // check if a simulation is possible given the simulation state
 bool environment::is_simulation_legal() {
-  // simulation is legal if none of the objects are NULL
-  return subjects.w && subjects.pl && subjects.pa;
+  // simulation is legal if the selected node is of type world
+  if (selection)
+    return selection->get_data()->get_type_code() == 0 && static_cast<world*>(selection->get_data())->can_simulate();
+  else 
+    return false;
 }
 
 // draw environment
@@ -176,7 +160,7 @@ void environment::draw() {
     height = mode->height;
   }
   // update projection matrix for draw phase
-  proj = glm::perspective((float)(M_PI / 4), (float)width / height, 0.1f, 300.0f);
+  proj = glm::perspective((float)(M_PI / 4), (float)width / height, 0.1f, 900.0f);
   // shift screen 'centre' to account for gui
   float of = (float)(((500.0 + (width-500.0)/2.0)-width/2.0)/(width/2.0));
   glm::mat4 offset = glm::translate(glm::mat4(1.0f), glm::vec3(of, 0.0f, 0.0f));

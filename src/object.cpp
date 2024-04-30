@@ -1,6 +1,7 @@
 #include "object.hpp"
 #include "simulation.hpp"
 #include <cmath>
+#include "utils.h"
 void mesh::bind() {
   // bind shader and vertex array buffer for drawing
   m_shader->bind();
@@ -36,12 +37,18 @@ void mesh::draw() {
   // draw elements
   glDrawElements(GL_TRIANGLES, m_elements, GL_UNSIGNED_INT, 0);
 }
+
+void line_mesh::draw() {
+  // draw elements
+  glDrawElements(GL_LINES, m_elements, GL_UNSIGNED_INT, 0);
+}
+
 // object
 void object::update(float delta) {
   if (m_mode == MODE::ACTIVE) {
     // take the proportion of time left and smooth it
     // linear interpolate the result to get the position between the start and end points
-    position = lerp(m_start, m_end, smooth(m_timestamp.get_elapsed_time() / m_total_time));
+    position = lerp3f(m_start, m_end, smooth(m_timestamp.get_elapsed_time() / m_total_time));
     if (m_timestamp.get_elapsed_time() > m_total_time) {
       // snap to final position after the movement time is over, and exit motion state
       position = m_end;
@@ -92,19 +99,70 @@ glm::mat4 world::model_matrix() const {
   return glm::mat4();
 }
 
-// disable drawing
-void world::draw(glm::mat4 &vp_matrix) const {};
-void world::draw(glm::mat4 &vp_matrix, float scale) const {};
-
 void world::update(float delta) {
   if (GUI::get_state() == GUI::SIMULATE) {
-    current_simulation.update();
+    current_simulation->update();
+  }
+}
+
+void world::child_added(object* child) {
+  // update info 
+  DEBUG_TEXT("child added to world")
+  switch (child->get_type_code()) {
+    case 1: {
+      if (!simulation_objects.pl) {
+        simulation_objects.pl = static_cast<plane*>(child);
+        child->set_modified_callback(static_cast<void (*)(GUIitem*)>(&world::reset_simulation));
+        child->set_callback_node(this);
+        DEBUG_TEXT("plane added to simulation state")
+      }
+      break;
+    }
+    case 3: {
+      if (!simulation_objects.pa) {
+        simulation_objects.pa = static_cast<particle*>(child);
+        child->set_modified_callback(static_cast<void (*)(GUIitem*)>(&world::reset_simulation));
+        child->set_callback_node(this);
+        DEBUG_TEXT("particle added to simulation state")
+      }
+      break;
+    }
+    case 0:
+    default:
+    break;
+  }
+  create_simulation();
+}
+
+bool world::create_simulation() {
+  if (simulation_objects.pa && simulation_objects.pl) {
+    DEBUG_TEXT("simulation state set to particle and plane")
+    current_simulation = new pp(this, simulation_objects.pa, simulation_objects.pl);
+  } else {
+    return false;
+  }
+  return true;
+}
+
+void world::child_removed(object* child) {
+  // update info 
+  if (child == simulation_objects.pa)
+    simulation_objects.pa = NULL;
+  else if (child == simulation_objects.pl)
+    simulation_objects.pl = NULL;
+
+  if (current_simulation)
+    delete current_simulation;
+  if (!create_simulation()) {
+    current_simulation = NULL;
   }
 }
 
 void world::show() const {
   // display simulation options with imgui
-  ImGui::InputFloat("x", (float*)&distance, 1.0f, 10.0f);
+  float old_distance = distance;
+  if (ImGui::InputFloat("x", (float*)&distance, 1.0f, 10.0f))
+    reset_simulation((GUIitem*)this);
   ImGui::InputFloat("m", (float*)&mass, 0.0f, 10.0f);
   ImGui::InputFloat("g", (float*)&gravity, 0.0f, 10.0f);
   ImGui::InputFloat("f", (float*)&force, 0.0f, 10.0f);
@@ -178,7 +236,8 @@ glm::mat4 plane::model_matrix() const {
 }
 
 void plane::show() const {
-  ImGui::SliderFloat("rotation", (float *)&rotation, 0.0f, M_PI/2);
+  if (ImGui::SliderFloat("rotation", (float *)&rotation, 0.0f, M_PI/2))
+    (*m_value_modified)(callback_node);
   ImGui::SliderFloat("length", (float *)&length, 0.0f, 70.0f);
 }
 
@@ -272,4 +331,5 @@ glm::mat4 particle::model_matrix() const {
 
 void particle::show() const {
   ImGui::SliderFloat("scale", (float *)&m_scale, 0.0f, 30.0f);
+    (*m_value_modified)(callback_node);
 }

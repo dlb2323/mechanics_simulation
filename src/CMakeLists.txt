@@ -1,12 +1,15 @@
 set(SOURCE_FILES
-    shader.hpp
-    shader.cpp
-    object.hpp
-    object.cpp
-    environment.hpp
     environment.cpp
-    gui.hpp
+    environment.hpp
     gui.cpp
+    gui.hpp
+    object.cpp
+    object.hpp
+    shader.cpp
+    shader.hpp
+    simulation.cpp
+    simulation.hpp
     tree.hpp
+    utils.h
     )
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCE_FILES})
