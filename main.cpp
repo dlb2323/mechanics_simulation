@@ -148,6 +148,10 @@ int main() {
   plane::gen_vertex_data(plane_mesh);
   plane::plane_mesh = &plane_mesh;
 
+  line_mesh world_mesh(&main);
+  world::gen_vertex_data(world_mesh);
+  world::world_mesh = &world_mesh;
+
   // create simulation environment
   DEBUG_TEXT("creating simulation environment")
   environment env(window);

@@ -123,6 +123,9 @@ void environment::create(object* o) {
   } else {
     objects->insert_node(node);
   }
+  // scatter worlds further
+  if (o->get_type_code() == 0)
+    pos*=10;
   o->move_to(pos); 
   if (selection && selection->get_data()->get_type_code() == 0) {
     static_cast<world*>(selection->get_data())->child_added(o);
