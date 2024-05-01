@@ -226,9 +226,9 @@ void world::child_removed(object* child) {
 void world::show() const {
   // display simulation options with imgui
   float old_distance = distance;
+  ImGui::InputFloat("time scale", (float*)&time_scale, 1.0f, 10.0f);
   if (ImGui::InputFloat("x", (float*)&distance, 1.0f, 10.0f))
     reset_simulation((GUIitem*)this);
-  ImGui::InputFloat("elasticity", (float*)&elasticity, 0.0f, 1.0f);
   ImGui::InputFloat("m", (float*)&mass, 0.0f, 10.0f);
   ImGui::InputFloat("g", (float*)&gravity, 0.0f, 10.0f);
   ImGui::InputFloat("f", (float*)&force, 0.0f, 10.0f);
@@ -509,9 +509,10 @@ void spring::draw(glm::mat4& vp_matrix, float scale) const {
 }
 
 void spring::show() const {
-  if (ImGui::SliderFloat("extension", (float*)&extension, 0.0f, length))
+  ImGui::InputFloat("elasticity", (float*)&elasticity, 0.0f, length, "%.3f");
+  if (ImGui::InputFloat("extension", (float*)&extension, 0.0f, length, "%.3f"))
     (*m_value_modified)(callback_node);
-  if (ImGui::SliderFloat("length", (float*)&length, 0.0f, 20.0f))
+  if (ImGui::InputFloat("length", (float*)&length, 0.0f, 20.0f, "%.3f"))
     (*m_value_modified)(callback_node);
   if (ImGui::InputFloat("scale", (float*)&m_scale))
     (*m_value_modified)(callback_node);

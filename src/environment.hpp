@@ -69,6 +69,7 @@ class environment {
   glm::mat4 proj;
   // hold pointer to currently selected object
   tree_node<object*>* selection;
+  tree_node<object*>* simulation;
 public:
   // declare object tree as type object*
   tree_node<object*>* objects;
@@ -85,6 +86,7 @@ public:
   void create(object* object);
   void remove(tree_node<object*>* object);
   void simulation_start();
+  void simulation_end();
   bool is_simulation_legal();
 
   // pass in node to select

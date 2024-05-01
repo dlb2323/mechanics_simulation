@@ -31,12 +31,15 @@ class simulation {
 protected:
   world* m_world;
   timestamp m_time;
+  float m_time_scale;
+  float get_time() { return m_time.get_elapsed_time()*m_time_scale; };
 public:
   simulation(world* world) : m_world(world) {}
   virtual ~simulation() {};
   virtual void reset() = 0;
   virtual void update() = 0;
   virtual void start() = 0;
+  virtual void end() = 0;
 };
 
 // simulation of a particle and a plane
@@ -48,9 +51,11 @@ public:
   void reset() override;
   void update() override;
   void start() override;
+  void end() override;
 };
 
 class spp : public simulation {
+  float extension;
   spring* m_spring;
   particle* m_particle;
   plane* m_plane;
@@ -59,6 +64,7 @@ public:
   void reset() override;
   void update() override;
   void start() override;
+  void end() override;
 };
 
 
