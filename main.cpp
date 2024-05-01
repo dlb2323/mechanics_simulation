@@ -152,6 +152,16 @@ int main() {
   world::gen_vertex_data(world_mesh);
   world::world_mesh = &world_mesh;
 
+  mesh spring_mesh(&main);
+  spring::gen_vertex_data(12, 60, 0.3, 0.5, spring_mesh);
+  spring::spring_mesh = &spring_mesh;
+
+  mesh spring_mesh_highlight(&single_colour);
+  spring::gen_vertex_data(12, 60, 0.3, 0.5*1.6f, spring_mesh_highlight);
+  spring::spring_mesh_highlight = &spring_mesh_highlight;
+  spring::coil_width = 0.3;
+  spring::coils = 12;
+
   // create simulation environment
   DEBUG_TEXT("creating simulation environment")
   environment env(window);

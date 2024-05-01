@@ -27,6 +27,10 @@ static object * create_world(std::string& name) {
  return new world(name, 300); 
 }
 
+static object * create_spring(std::string& name) {
+ return new spring(name, 5); 
+}
+
 // show the main gui tree
 // requires environment data
 void GUI::show(environment& env) {
@@ -193,6 +197,7 @@ void GUI::show(environment& env) {
     tab_item(env, "world", create_world);
     tab_item(env, "particle", create_particle);
     tab_item(env, "plane", create_plane);
+    tab_item(env, "spring", create_spring);
     ImGui::EndTabBar();
   }
   ImGui::Separator();
