@@ -59,11 +59,11 @@ environment::environment(GLFWwindow *window)
     : window(window),
       main_shader("vertex_shader.glsl", "fragment_shader.glsl"),
       single_colour("vertex_shader.glsl", "single_colour_shader.glsl"),
-      sphere_mesh(&main_shader) {
+      particle_mesh(&main_shader) {
     std::string r = "root";
-  objects = tree_node<object*>::create_new(new world(&sphere_mesh, 1, &single_colour));
+  objects = tree_node<object*>::create_new(new world(&particle_mesh, 1, &single_colour));
   selection = NULL;
-  sphere::gen_vertex_data(120, sphere_mesh);
+  particle::gen_vertex_data(120, particle_mesh);
 }
 environment::~environment() {
   auto traverse = objects->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
@@ -76,12 +76,13 @@ camera environment::current_camera;
 
 void environment::update(float delta) {}
 
-sphere *environment::create(std::string &name, unsigned int radius) {
-  sphere *n = new sphere(name, &sphere_mesh, radius, &single_colour);
-  select(n);  
-  objects->insert_node(tree_node<object*>::create_new(n));
+tree_node<object*>* environment::create(std::string &name, unsigned int radius) {
+  particle *n = new particle(name, &particle_mesh, radius, &single_colour);
+  tree_node<object*>* node = tree_node<object*>::create_new(n);
+  select(node);  
+  objects->insert_node(node);
   // messy
-  return n;
+  return node;
 }
 
 void environment::draw() {
@@ -108,7 +109,7 @@ void environment::draw() {
 
   if (selection) {
       glDisable(GL_DEPTH_TEST);
-      selection->draw(vp_matrix, 1.1f);
+      selection->get_data()->draw(vp_matrix, 1.1f);
       glEnable(GL_DEPTH_TEST);
   }
 }

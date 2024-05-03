@@ -14,9 +14,13 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "imgui.h"
+#include "tree.hpp"
 
+class object;
 class environment;
 class shader;
+class GUIitem;
+
 
 class GUI {
 public:
@@ -24,6 +28,7 @@ public:
   static STATE state;
   GUI() {}
   static void show(environment& env);
+  static void show_object_tree(tree_node<object*>* object, environment& env);
   static void help();
   static void particle_options(std::string name);
 };
@@ -35,7 +40,7 @@ protected:
 public:
   GUIitem(std::string& name) : m_name(name) {}
   GUIitem(const char * name) : m_name(name) {}
-  virtual void show() const {};
+  virtual void show() const;
   std::string get_name() const { return m_name; }
 };
 
