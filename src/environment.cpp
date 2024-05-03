@@ -36,8 +36,11 @@ void camera::update() {
   // switch state
   switch (m_mode) {
   case camera::MODE::FOCUS: {
+    // take the proportion of time left and smooth it
+    // linear interpolate the result to get the position between the start and end points
     m_position = lerp(m_start, m_focus_point, smooth(m_timestamp.get_elapsed_time() / m_total_time));
     if (m_timestamp.get_elapsed_time() > m_total_time) {
+      // snap to end point, exit focus state
       m_position = m_focus_point;
       m_mode = camera::MODE::STILL;
     }
@@ -59,45 +62,60 @@ void camera::update() {
     break;
   }
   case camera::MODE::STILL:
+  // do nothing
   default:
     break;
   }
 }
 
-// environment
+// environment constructor
 environment::environment(GLFWwindow *window)
     : window(window) {
+  // initialise world, plane, and particle pointers to NULL state
   subjects = {NULL, NULL, NULL};
+  // initialise root node to type world 
   objects = tree_node<object*>::create_new(new world(plane::plane_mesh, 1.0f));
+  // pass world to simulation data
   subjects.w = (world*)objects->get_data();
+  // initialise selection to NULL state
   selection = NULL;
 }
+// environment destructor
 environment::~environment() {
-  auto traverse = objects->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
-  while(traverse.next())
-    delete traverse.get_item();
+  // delete tree
   tree_node<object*>::destroy(objects);
 };
 
+// initialise static camera
 camera environment::current_camera;
 
-
+// environment update function, called each frame
+// updates all nodes in the object tree
 void environment::update(float delta) {
+  // create tree iterator
   auto itr = objects->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
+  // update objects 
   while(itr.next()) {
     itr.get_item()->update(delta);
   }
   if (is_simulation_legal()) {
+    // update simulation state, if all simulation objects are present
+    // move plane to zero vector
     subjects.pl->move_to(glm::vec3(0.0f, 0.0f, 0.0f));
-    float l = subjects.w->distance;
-    // subjects.pl->length = l/15;
+    // using matrix transformations to obtain a vector on the line parallel to the plane
+    // create matrix t to perform rotations 
     glm::mat4 t(1.0f);
+    // rotate t parallel to the plane
     t = glm::rotate(t, (subjects.pl->rotation), glm::vec3(0.0f, 0.0f, -1.0f));
-    t = glm::translate(t, glm::vec3(l, 0.0f, 0.0f));
+    // translate a distance across the plane 
+    t = glm::translate(t, glm::vec3(subjects.w->distance, 0.0f, 0.0f));
+    // take the resultant position of the matrix 
     glm::vec3 offset = t[3];
-    subjects.pa->move_to(offset*l+glm::vec3(0.0f, 10.0f, 0.0f));
+    // move to this position with an extra offset to appear above the plane
+    subjects.pa->move_to(offset+glm::vec3(0.0f, 10.0f, 0.0f));
   }
   if (GUI::get_state() == GUI::SIMULATE) {
+    // update particle position when simulating
     subjects.pa->position = simulation_func();
   }
 }
@@ -108,7 +126,7 @@ glm::vec3 environment::simulation_func() {
   t = glm::rotate(t, (subjects.pl->rotation), glm::vec3(0.0f, 0.0f, -1.0f));
   t = glm::translate(t, glm::vec3(l, 0.0f, 0.0f));
   glm::vec3 offset = t[3];
-  glm::vec3 position = offset*l+glm::vec3(0.0f, 10.0f, 0.0f); 
+  glm::vec3 position = offset+glm::vec3(0.0f, 10.0f, 0.0f); 
   float r = (
     ((subjects.w->force - subjects.w->mass*subjects.w->gravity
     *sin(subjects.pl->rotation)))
@@ -129,7 +147,7 @@ void environment::simulation_start() {
     t = glm::rotate(t, (subjects.pl->rotation), glm::vec3(0.0f, 0.0f, -1.0f));
     t = glm::translate(t, glm::vec3(l, 0.0f, 0.0f));
     glm::vec3 offset = t[3];
-    subjects.pa->position = offset*l+glm::vec3(0.0f, 10.0f, 0.0f);
+    subjects.pa->position = offset+glm::vec3(0.0f, 10.0f, 0.0f);
 }
 
 tree_node<object*>* environment::create(object* o) {
