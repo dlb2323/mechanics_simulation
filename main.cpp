@@ -15,31 +15,40 @@
 #include "src/gui.hpp"
 #include "tree.hpp"
 
+// opengl debug forward declaration
 void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id,
                             GLenum severity, GLsizei length,
                             const char *message, const void *userParam);
 
+// glfw key callback
 void key_callback(GLFWwindow *window, int key, int scancode, int action,
                   int mods) {
+  // F11: toggle fullscreen
   if (key == GLFW_KEY_F11 && action == GLFW_PRESS) {
     int width = 1200, height = 800;
+    // find if the window is fullscreen
     GLFWmonitor *monitor = glfwGetWindowMonitor(window);
     if (!monitor) {
+      // not fullscreen, get screen width and height
       const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
       width = mode->width;
       height = mode->height;
     }
+    // switch screen mode
     glfwSetWindowMonitor(window, monitor ? NULL : glfwGetPrimaryMonitor(), 50,
                          50, width, height, 60);
   }
+  // ESC: close program 
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
+// glfw error callback 
 void error_callback(int error, const char *description) {
   std::cerr << "Error: %s\n" << description;
 }
 
+// framebuffer callback, update opengl viewport
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
