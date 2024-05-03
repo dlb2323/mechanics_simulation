@@ -1,17 +1,18 @@
 #include "gui.hpp"
 #include "object.hpp"
 #include "environment.hpp"
+#include <string>
 
 GUI::STATE GUI::state;
 
 static object * create_particle(std::string& name) {
- return new particle(name, 5); 
+ return new particle(name, 3); 
 }
 static object * create_point(std::string& name) {
- return new particle(name, 5); 
+ return new point(name, 1); 
 }
 static object * create_plane(std::string& name) {
- return new particle(name, 5); 
+ return new plane(name, 30); 
 }
 
 void GUI::show(environment& env) {
@@ -79,8 +80,8 @@ void GUI::show(environment& env) {
 
   // camera
   // implement scroll wheel zoom!
-  // ImGui::SliderFloat("zoom", &environment::current_camera.zoom,
-  //                    0.0f, 10.0f, "%.4f");
+  ImGui::SliderFloat("zoom", &environment::current_camera.zoom,
+                     0.0f, 20.0f, "%.4f");
 
   ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
   if (ImGui::BeginTabBar("Objects", tab_bar_flags))
@@ -116,16 +117,20 @@ void GUI::show(environment& env) {
                 ImGui::SameLine(350.0f);
                 ImGui::Text("name conflict");
               }
+              static int count = 1;
+              ImGui::InputInt("count", &count);
               if (ImGui::Button((std::string("create ") + name).c_str()) && GUI::state != GUI::SIMULATE) {
-                if (!match) {
-                  tree_node<object*>* p_object_node = env.create(create_object(s_input));
-                  glm::vec3 pos(std::rand() % 100 - 50, std::rand() % 100 - 50,
-                                std::rand() % 100 - 50);
-                  p_object_node->get_data()->move_to(pos); 
+                for (int i = 0; i < count; i++) {
+                  std::string s_alt = s_input;
+                  if (i != 0)
+                    s_alt += std::to_string(i);
+                  if (true) { //!match) {
+                    tree_node<object*>* p_object_node = env.create(create_object(s_alt));
+                  }
                 }
               }
               ImGui::SameLine(364.0f);
-              if (ImGui::Button("remove object")) {
+              if (ImGui::Button("remove object") && GUI::state != GUI::SIMULATE) {
                 auto node = env.get_selection();
                 if (node && node->get_data()->get_name() != "world") {
                   env.deselect(true);
@@ -133,20 +138,31 @@ void GUI::show(environment& env) {
                 }
               }
             }
+        ImGui::EndTabItem();
         }
-      ImGui::EndTabItem();
     };
 
     tab_item(env, "particle", create_particle);
+    tab_item(env, "point", create_point);
+    tab_item(env, "plane", create_plane);
     ImGui::EndTabBar();
   }
   ImGui::Separator();
 
-  // particles
+  // objects 
   ImGui::Spacing();
+  if (GUI::state == GUI::EDIT){
+      ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
+      ImGui::BeginChild("Objects", ImVec2(ImGui::GetContentRegionAvail().x, 600), ImGuiChildFlags_None, window_flags);
+      GUI::show_object_tree(env.objects, env);
+      ImGui::EndChild();
+  }
 
-  GUI::show_object_tree(env.objects, env);
   ImGui::Spacing();
+  ImGui::Separator();
+  if (env.get_selection()) {
+    env.get_selection()->get_data()->show();
+  }
 
   // GUI::help();
 
@@ -168,8 +184,8 @@ void GUI::show_object_tree(tree_node<object*>* object, environment& env) {
       env.select(object);
       environment::current_camera.focus(object->get_data()->position);
     }
-    object->get_data()->show();
-    ImGui::Separator();
+    // object->get_data()->show();
+    // ImGui::Separator();
     for (int i = 0; i < object->get_child_count(); i++)
       GUI::show_object_tree(object->get_child(i), env);
     ImGui::TreePop();

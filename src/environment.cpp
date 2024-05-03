@@ -53,7 +53,9 @@ void camera::update() {
 // environment
 environment::environment(GLFWwindow *window)
     : window(window) {
+  subjects = {NULL, NULL, NULL, NULL, NULL};
   objects = tree_node<object*>::create_new(new world(plane::plane_mesh, 1.0f));
+  subjects.w = (world*)objects->get_data();
   selection = NULL;
 }
 environment::~environment() {
@@ -70,16 +72,55 @@ void environment::update(float delta) {
   while(itr.next()) {
     itr.get_item()->update(delta);
   }
+  if (is_simulation_legal()) {
+    subjects.pl->move_to(glm::vec3(0.0f, 0.0f, 0.0f));
+    float l = subjects.w->distance;
+    subjects.pl->length = l/15;
+    glm::mat4 t(1.0f);
+    t = glm::rotate(t, (subjects.pl->rotation)+(float)M_PI/2.0f, glm::vec3(0.0f, 0.0f, -1.0f));
+    t = glm::translate(t, glm::vec3(l, 0.0f, 0.0f));
+    glm::vec3 offset = t[3];
+    subjects.point_a->move_to(offset+glm::vec3(0.0f, 10.0f, 0.0f));
+    subjects.point_b->move_to(-offset+glm::vec3(0.0f, 10.0f, 0.0f));
+    subjects.pa->move_to(offset+glm::vec3(0.0f, 10.0f, 0.0f));
+  }
 }
 
 tree_node<object*>* environment::create(object* o) {
+  glm::vec3 pos(std::rand() % 100 - 50, std::rand() % 100 - 50,
+              std::rand() % 100 - 50);
   tree_node<object*>* node = tree_node<object*>::create_new(o);
-  if (selection)
+  if (selection) {
     selection->insert_node(node);
-  else
+    glm::vec3 select_pos = selection->get_data()->position;
+    pos += select_pos;
+    o->position = select_pos;
+  } else
     objects->insert_node(node);
+  o->move_to(pos); 
+  switch (o->get_type_code()) {
+    case 1:
+      subjects.pl = (plane*)o;
+      break;
+    case 2: {
+      if (subjects.point_a)
+        subjects.point_b = (point*)o;
+      else
+        subjects.point_a = (point*)o;
+      }
+      break;
+    case 3:
+      subjects.pa = (particle*)o;
+    case 0:
+    default:
+    break;
+  }
   // messy
   return node;
+}
+
+bool environment::is_simulation_legal() {
+  return subjects.w && subjects.point_a && subjects.point_b && subjects.pl && subjects.pa;
 }
 
 void environment::draw() {
