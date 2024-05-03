@@ -21,7 +21,7 @@ void vertexObject::write_end() {
 
 void vertexObject::set_shader(shader *s) { m_shader = s; }
 
-unsigned int sphere::gen_vertex_data(unsigned int nodes, vertexObject &vObj) {
+void sphere::gen_vertex_data(unsigned int nodes, vertexObject &vObj) {
   double phi, theta;
   int data_locations = 3 * (nodes * (nodes - 1) + 2);
   float *data = new float[data_locations];
@@ -92,7 +92,7 @@ unsigned int sphere::gen_vertex_data(unsigned int nodes, vertexObject &vObj) {
   delete[] tree;
   delete[] data;
   vObj.write_end();
-  return vertices*6;
+  vObj.set_elements(vertices*6);
 }
 void vertexObject::set_elements(unsigned int elements) {
   m_elements = elements; 
