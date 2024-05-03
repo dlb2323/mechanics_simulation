@@ -101,6 +101,10 @@ void sphere::gen_vertex_data(unsigned int nodes, mesh &sphere_mesh) {
   sphere_mesh.write_end();
   sphere_mesh.set_elements(vertices*6);
 }
+// world
+
+void world::draw(glm::mat4 &vp_matrix) const {};
+void world::draw(glm::mat4 &vp_matrix, float scale) const {};
 
 void sphere::draw(glm::mat4& vp_matrix) const {
   if (selected) {
