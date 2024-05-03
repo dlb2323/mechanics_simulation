@@ -5,41 +5,55 @@
 
 // camera
 
+// enter focus state
+// in focus state, a start and end point are defined
+// the camera will move between these points for the m_total_time seconds 
 void camera::focus(const glm::vec3 &point) {
+  // record current time
   m_timestamp.begin();
+  // set start and end positions
   m_focus_point = point;
   m_start = m_position;
+  // set state
   m_mode = camera::MODE::FOCUS;
 }
 
+// enter track state
+// in track state, a start point is defined, but the end point 
+// is continuously updated as the target's position vector changes
+// the camera will move between these the start and the target's position vector 
+// for m_total_time seconds after which it will snap to the target's position each frame 
 void camera::track(glm::vec3 *target) {
   m_timestamp.begin();
+  // set pointer to target's position vector
   m_p_target = target;
   m_start = m_position;
   m_mode = camera::MODE::TRACK;
 }
 
+// camera update function, called every frame
 void camera::update() {
+  // switch state
   switch (m_mode) {
   case camera::MODE::FOCUS: {
+    m_position = lerp(m_start, m_focus_point, smooth(m_timestamp.get_elapsed_time() / m_total_time));
     if (m_timestamp.get_elapsed_time() > m_total_time) {
       m_position = m_focus_point;
       m_mode = camera::MODE::STILL;
     }
-    m_position = lerp(m_start, m_focus_point,
-                      smooth(m_timestamp.get_elapsed_time() / m_total_time));
     break;
   }
   case camera::MODE::TRACK: {
     if (!m_p_target) {
+      // if target no longer exists, exit track state
       m_mode = camera::MODE::STILL;
     } else {
       if (m_timestamp.get_elapsed_time() > m_total_time) {
+        // motion time complete, snap to target position
         m_position = *m_p_target;
       } else {
-        m_position =
-            lerp(m_start, *m_p_target,
-                 smooth(m_timestamp.get_elapsed_time() / m_total_time));
+        // linear interpolate between start and target position
+        m_position = lerp(m_start, *m_p_target, smooth(m_timestamp.get_elapsed_time() / m_total_time));
       }
     }
     break;
