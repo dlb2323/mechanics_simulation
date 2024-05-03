@@ -12,7 +12,7 @@ GUI::STATE GUI::state;
 // object creation functions
 // called by buttons
 static object * create_particle(std::string& name) {
- return new particle(name, 3); 
+ return new particle(name, 5); 
 }
 
 static object * create_point(std::string& name) {

@@ -396,8 +396,6 @@ glm::mat4 particle::model_matrix() const {
 
 void particle::show() const {
   ImGui::InputFloat("mass", (float*)&mass, 0.0f, 10.0f);
-  ImGui::SliderFloat("scale", (float *)&m_scale, 0.0f, 30.0f);
-    (*m_value_modified)(callback_node);
 }
 
 // spring
@@ -513,7 +511,5 @@ void spring::show() const {
   if (ImGui::InputFloat("extension", (float*)&extension, 0.0f, length, "%.3f"))
     (*m_value_modified)(callback_node);
   if (ImGui::InputFloat("length", (float*)&length, 0.0f, 20.0f, "%.3f"))
-    (*m_value_modified)(callback_node);
-  if (ImGui::InputFloat("scale", (float*)&m_scale))
     (*m_value_modified)(callback_node);
 }
