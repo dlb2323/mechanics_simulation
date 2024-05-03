@@ -46,6 +46,7 @@ void object::draw(glm::mat4& vp_matrix) const {
   m_mesh->bind();
   glm::mat4 mvp = vp_matrix * model_matrix();
   glUniformMatrix4fv(m_mesh->get_shader()->mvp_location(), 1, GL_FALSE, glm::value_ptr(mvp));
+  glUniform3fv(m_mesh->get_shader()->colour_location(), 1, glm::value_ptr(m_colour));
   glUniform1f(m_mesh->get_shader()->time_location(), (float)glfwGetTime());
 
   m_mesh->draw();
@@ -70,6 +71,7 @@ void object::draw(glm::mat4& vp_matrix, float scale) const {
         model, glm::vec3(1.0f)*scale);
     glm::mat4 mvp = vp_matrix * model;
     glUniformMatrix4fv(m_mesh->get_shader()->mvp_location(), 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniform3fv(m_mesh->get_shader()->colour_location(), 1, glm::value_ptr(m_colour));
     glUniform1f(m_mesh->get_shader()->time_location(), (float)glfwGetTime());
     m_mesh->draw();
     m_mesh->unbind();
@@ -104,8 +106,6 @@ void world::show() const {
 glm::mat4 point::model_matrix() const {
   glm::mat4 model = glm::mat4(1.0f);
   model = glm::translate(model, position);
-  model = glm::rotate(model, (float)glfwGetTime() / 20,
-                      glm::vec3(1.0f, 0.0f, 1.0f));
   model = glm::scale(
       model, glm::vec3(1.0f)*m_scale);
   return model;
@@ -244,8 +244,6 @@ void particle::gen_vertex_data(unsigned int nodes, mesh &particle_mesh) {
 glm::mat4 particle::model_matrix() const {
   glm::mat4 model = glm::mat4(1.0f);
   model = glm::translate(model, position);
-  model = glm::rotate(model, (float)glfwGetTime() / 20,
-                      glm::vec3(1.0f, 0.0f, 1.0f));
   model = glm::scale(
       model, glm::vec3(1.0f)*m_scale);
   return model;

@@ -45,9 +45,14 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 int main() {
+  // seed
+  std::srand(std::time(0));
+
+  // exit if glfw fails to initialise
   if (!glfwInit())
     exit(EXIT_FAILURE);
 
+  // set up window information and register debug context
   GLFWwindow *window;
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -55,37 +60,46 @@ int main() {
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
   glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
 
+  // find the primary monitor and enter fullscreen
   int width, height;
   GLFWmonitor *monitor = glfwGetPrimaryMonitor();
   if (monitor) {
     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
     width = mode->width;
     height = mode->height;
+  } else {
+    // terminate if primary monitor isn't found
+    glfwTerminate();
+    exit(EXIT_FAILURE);
   }
-  window = glfwCreateWindow(width, height, "mechanics_simulation",
+  window = glfwCreateWindow(width, height, "ms",
                             glfwGetPrimaryMonitor(), NULL);
+  // terminate if glfw failed to create the window
+  if (!window) {
+    glfwTerminate();
+    exit(EXIT_FAILURE);
+  }
+  // register glfw callbacks
   glfwSetKeyCallback(window, key_callback);
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   glfwMakeContextCurrent(window);
   glfwSetErrorCallback(error_callback);
 
-  if (!window) {
-    glfwTerminate();
-    exit(EXIT_FAILURE);
-  }
   // opengl setup
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
+  // enable depth and stencil testing
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_STENCIL_TEST);
   glStencilFunc(GL_ALWAYS, 0, 0xFF);
   glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
 #ifdef DRAW_WIREFRAME
   /* set drawing to wireframe mode */
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 #endif
 
-  /* debugging */
+  // register opengl debugging
   int flags;
   glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
   if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
@@ -95,7 +109,6 @@ int main() {
     glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR,
                           GL_DEBUG_SEVERITY_HIGH, 0, nullptr, GL_TRUE);
   }
-  // end
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
@@ -103,11 +116,6 @@ int main() {
   ImGuiIO &io = ImGui::GetIO();
   io.ConfigFlags |=
       ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-  io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
-#ifdef IMGUI_DOCKING_BRANCH
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // IF using Docking Branch
-#endif                                              // !IMGUI_DOCKING_BRANCH
 
   // Setup Platform/Renderer backends
   ImGui_ImplGlfw_InitForOpenGL(
@@ -116,26 +124,8 @@ int main() {
   ImGui_ImplOpenGL3_Init();
   ImGui::StyleColorsClassic();
   io.Fonts->AddFontFromFileTTF("res/IBMPlexMono-Light.otf", 20.0f);
-  // end
 
-
-  // int count = 0; 
-  // tree_node<int>* rootl = tree_node<int>::create_new(count++);
-  // for (int i = 0; i < 4; i++)
-  //   rootl->insert_node(tree_node<int>::create_new(count++));
-  // auto c1 = rootl->get_child(0);
-  // for (int i = 0; i < 4; i++)
-  //   c1->insert_node(tree_node<int>::create_new(count++));
-  // auto c2 = c1->get_child(0);
-  // for (int i = 0; i < 4; i++)
-  //   c2->insert_node(tree_node<int>::create_new(count++));
-  // auto t = rootl->get_traversal_state(traversal_state<int>::MODE::PREORDER);
-  // while(t.next())
-  //   std::cout << t.get_item() << std::endl;
-  // std::cin.get();
-
-
-  // load data
+  // load and store data
   shader main("vertex_shader.glsl", "fragment_shader.glsl");
   shader::main = &main;
   shader single_colour("vertex_shader.glsl", "single_colour_shader.glsl");
@@ -148,8 +138,11 @@ int main() {
   mesh plane_mesh(&main);
   plane::gen_vertex_data(plane_mesh);
   plane::plane_mesh = &plane_mesh;
+
+  // create simulation environment
   environment env(window);
 
+  // initialise delta timestamp
   timestamp delta;
   delta.begin();
 
@@ -158,12 +151,13 @@ int main() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    ImGui::ShowDemoWindow(); // Show demo window! :)
     GUI::show(env);
 
     // update
     env.update(delta.get_elapsed_time());
     environment::current_camera.update();
+
+    delta.begin();
 
     // draw
     glClearColor(0.529, 0.808, 0.98, 0.7);
@@ -177,7 +171,6 @@ int main() {
 
     glfwSwapBuffers(window);
     glfwPollEvents();
-    delta.begin();
   }
 
   ImGui_ImplOpenGL3_Shutdown();
