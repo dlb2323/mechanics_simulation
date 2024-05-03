@@ -14,6 +14,7 @@ template <typename T> class traversal_state {
     state m_stack[128];
     int m_stack_pointer;
     T m_item;
+    int m_item_stack_pointer;
 
 public:
     enum MODE { PREORDER, POSTORDER, INORDER };
@@ -23,7 +24,16 @@ public:
         m_stack_pointer = 0;
     };
     T get_item() const { return m_item; };
+    tree_node<T>* get_node() const {
+        tree_node<T>* p_node = NULL;
+        if (m_stack_pointer > 0)
+            p_node = m_stack[m_stack_pointer].node_pointer;
+        return p_node;
+    };
     bool next();
+    bool next_preorder();
+    bool next_postorder();
+    void leave_branch();
 };
 
 template <typename T> class tree_node {
@@ -49,6 +59,21 @@ public:
 
 template <typename T> 
 inline bool traversal_state<T>::next() {
+    switch(mode) {
+        case MODE::PREORDER:
+            return next_preorder();
+            break;
+        case MODE::POSTORDER:
+            return next_postorder();
+            break;
+        case MODE::INORDER:
+            break;
+    }
+    return false;
+}
+
+template <typename T> 
+inline bool traversal_state<T>::next_postorder() {
     bool node_found = false;
     while (!node_found) {
         if (m_stack_pointer < 0)
@@ -70,6 +95,37 @@ inline bool traversal_state<T>::next() {
         }
     }
     return true;
+}
+
+template<typename T>
+inline bool traversal_state<T>::next_preorder() {
+    bool node_found = false;
+    while(!node_found) {
+        if (m_stack_pointer < 0)
+            return false;
+        m_item = m_stack[m_stack_pointer].node_pointer->get_data();
+        m_item_stack_pointer = m_stack_pointer;
+        if (m_stack[m_stack_pointer].leaf_pointer <
+            m_stack[m_stack_pointer].node_pointer->get_child_count()) {
+            m_stack[m_stack_pointer+1] = state{ m_stack[m_stack_pointer].node_pointer->get_child(
+                m_stack[m_stack_pointer].leaf_pointer), 0 };
+            if (m_stack[m_stack_pointer].leaf_pointer == 0)
+                node_found = true;
+            m_stack[m_stack_pointer].leaf_pointer++;
+            m_stack_pointer++;
+        }
+        else {
+            if (m_stack[m_stack_pointer].node_pointer->get_child_count() == 0)
+                node_found = true;
+            m_stack_pointer--;
+        }
+    }
+    return node_found;
+}
+
+template <typename T> 
+inline void traversal_state<T>::leave_branch() {
+    m_stack_pointer=m_item_stack_pointer-1;
 }
 
 template <typename T>

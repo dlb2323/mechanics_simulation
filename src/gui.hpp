@@ -38,8 +38,6 @@ public:
 
 class GUIitem {
 const std::string m_name;
-protected:
-  bool selected = false;
 public:
   GUIitem(std::string& name) : m_name(name) {}
   GUIitem(const char * name) : m_name(name) {}

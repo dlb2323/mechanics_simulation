@@ -66,17 +66,12 @@ public:
   //   return (idx < objects.size()) ? objects[idx] : NULL;
   // };
   void select(tree_node<object*>* object) {
-    if (selection) {
-      selection->get_data()->deselect();
-    }
-    object->get_data()->select();
     selection = object;
   }
   tree_node<object*>* get_selection() const { return selection; }; 
 
   void deselect(bool reselect = false) {
     if (selection) {
-      selection->get_data()->deselect();
       tree_node<object*>* parent = selection->get_parent();
       if (parent && reselect) {
         if(parent->get_child_count() > 1)
