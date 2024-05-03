@@ -88,13 +88,11 @@ void spp::update() {
   glm::vec3 position = m_world->position+start+offset; 
   glm::vec3 particle_start = (m_world->distance+(m_spring->length-m_spring->extension))*t[3];
   // calculate displacement parallel to the plane
-  float end_time = ((float)M_PI)/(2*sqrt(m_spring->length/(m_world->mass*m_spring->length))); 
-  float r;
-  if (get_time() < end_time) {
-    r = m_spring->length-extension*cos(sqrt(m_spring->elasticity/(m_world->mass*m_spring->length))*get_time());
-    m_spring->extension = m_spring->length-r;
-  } else {
-    m_spring->extension = 0;
+  float end_time = ((float)M_PI/2)/sqrt(m_spring->elasticity/(m_world->mass*m_spring->length)); 
+
+  float r = m_spring->length-extension*cos(sqrt(m_spring->elasticity/(m_world->mass*m_spring->length))*get_time());
+  m_spring->extension = m_spring->length-r;
+  if (get_time() > end_time) {
     r = sqrt((m_spring->elasticity*extension*extension)/(m_world->mass*m_spring->length))*get_time()+m_spring->length-extension;
   }
   m_particle->position = position+(glm::normalize(start)*r)*scalar;
