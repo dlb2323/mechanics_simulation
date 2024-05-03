@@ -198,6 +198,7 @@ void world::child_added(object* child) {
 }
 
 bool world::create_simulation() {
+  // decide which simulation to set up based on the available objects
   if (simulation_objects.pa1 && simulation_objects.pl && simulation_objects.sp) {
     DEBUG_TEXT("simulation state set to spring, particle and plane")
         if (current_simulation) {

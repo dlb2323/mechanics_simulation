@@ -99,12 +99,14 @@ void environment::update(float delta) {
   }
 }
 
+// calls simulation start on the simulation node
 void environment::simulation_start() {
   DEBUG_TEXT("simulation started")
   static_cast<world*>(selection->get_data())->start_simulation();
   simulation = selection;
 }
 
+// calls simulation end on the simulation node
 void environment::simulation_end() {
   DEBUG_TEXT("simulation ended")
   static_cast<world*>(simulation->get_data())->end_simulation();

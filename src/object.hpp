@@ -168,6 +168,7 @@ public:
   // override draw functions to disable drawing
   bool can_simulate() const { return current_simulation != NULL; } 
 
+  // called by children to reset the simulation state when editing variables
   static void reset_simulation(GUIitem* world) { 
     if (static_cast<class world*>(world)->current_simulation) { 
       static_cast<class world*>(world)->current_simulation->reset(); 
@@ -197,6 +198,7 @@ public:
 class particle : public object {
   glm::mat4 model_matrix() const override;
 public:
+  // editable values
   float force;
   float mass;
   float u_velocity;
@@ -223,10 +225,12 @@ public:
 class spring : public object {
   glm::mat4 model_matrix() const override;
 public:
+  // editable values
   float length;
   float extension;
   float elasticity;
   float rotation;
+  // globals
   static float coil_width;
   static int coils;
   static mesh* spring_mesh;

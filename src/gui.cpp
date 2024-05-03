@@ -106,6 +106,7 @@ void GUI::show(environment& env) {
       GUI::state = GUI::EDIT;
     }
   }
+  // notify the user that the gui is locked during a simulation
   if (GUI::state == GUI::SIMULATE) {
     ImGui::SameLine(120.0f);
     ImGui::Text("Simulating, GUI locked");
@@ -113,7 +114,7 @@ void GUI::show(environment& env) {
 
   auto io = ImGui::GetIO();
   static struct { float x; float y; } last_xy;
-  // scroll to zoom
+  // scroll to zoom if the cursor is not hovering the main input panel
   if (io.MousePos.x > window_width) {
     env.current_camera.zoom += io.MouseWheel*0.7f;
     if (env.current_camera.zoom < 0)
