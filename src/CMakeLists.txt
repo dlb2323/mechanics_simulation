@@ -1,6 +1,4 @@
 set(SOURCE_FILES
-    window.cpp
-    window.hpp
     shader.hpp
     shader.cpp
     sphere.cpp

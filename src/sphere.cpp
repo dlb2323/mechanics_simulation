@@ -21,6 +21,13 @@ void mesh::write_end() {
 
 void mesh::set_shader(shader *s) { m_shader = s; }
 
+void mesh::set_elements(unsigned int elements) {
+  m_elements = elements; 
+}
+void mesh::draw() {
+  glDrawElements(GL_TRIANGLES, m_elements, GL_UNSIGNED_INT, 0);
+}
+
 void sphere::gen_vertex_data(unsigned int nodes, mesh &sphere_mesh) {
   double phi, theta;
   int data_locations = 3 * (nodes * (nodes - 1) + 2);
@@ -94,10 +101,23 @@ void sphere::gen_vertex_data(unsigned int nodes, mesh &sphere_mesh) {
   sphere_mesh.write_end();
   sphere_mesh.set_elements(vertices*6);
 }
-void mesh::set_elements(unsigned int elements) {
-  m_elements = elements; 
+
+void sphere::draw(glm::mat4& vp_matrix) const {
+  m_mesh->bind();
+
+  glm::mat4 model = glm::mat4(1.0f);
+  model = glm::translate(model, position);
+  model = glm::rotate(model, (float)glfwGetTime() / 20,
+                      glm::vec3(1.0f, 0.0f, 1.0f));
+  model = glm::scale(
+      model, glm::vec3(m_radius, m_radius, m_radius));
+
+  glm::mat4 mvp = vp_matrix * model;
+  glUniformMatrix4fv(m_mesh->get_shader()->mvp_location(), 1, GL_FALSE, glm::value_ptr(mvp));
+  glUniform1f(m_mesh->get_shader()->time_location(), (float)glfwGetTime());
+
+  m_mesh->draw();
+
+  m_mesh->unbind();
 }
 
-void mesh::draw() {
-  glDrawElements(GL_TRIANGLES, m_elements, GL_UNSIGNED_INT, 0);
-}

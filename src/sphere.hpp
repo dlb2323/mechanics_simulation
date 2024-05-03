@@ -3,7 +3,9 @@
 
 #include "shader.hpp"
 
-#include <glm/vec3.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 class mesh {
   shader *m_shader;
@@ -25,6 +27,7 @@ public:
   }
   void set_elements(unsigned int elements);
   void set_shader(shader *s);
+  shader* get_shader() const { return m_shader; }
   void bind();
   void unbind();
   void write_begin();
@@ -32,12 +35,26 @@ public:
   void draw();
 };
 
-class sphere {
+class object  {
+std::string m_name;
+protected:
+mesh* m_mesh;
 public:
   glm::vec3 position;
+
+  object(mesh* mesh) : m_mesh(mesh) {}
+
+  std::string get_name() const { return m_name; }
+  virtual void draw(glm::mat4& modelview_matrix) const { std::cout << "test\n"; };
+};
+
+class sphere : public object {
   const float m_radius;
+public:
   static void gen_vertex_data(unsigned int nodes, mesh& mesh);
-  sphere(float radius) : m_radius(radius) {}
+  sphere(mesh* mesh, float radius) : object(mesh), m_radius(radius) {} 
+  float get_radius() const { return m_radius; };
+  void draw(glm::mat4& viewprojection_matrix) const override;
 };
 
 
