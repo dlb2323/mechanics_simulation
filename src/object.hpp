@@ -59,6 +59,8 @@ public:
 };
 
 class line_mesh : public mesh {
+public:
+  line_mesh(shader* s) : mesh(s) {}
   void draw() override;
 };
 
@@ -132,6 +134,7 @@ class world : public object {
   simulation* current_simulation;
 
 public:
+  static line_mesh* world_mesh;
   // simulation data
   float distance;
   float friction;
@@ -140,7 +143,7 @@ public:
   float mass;
   float u_velocity;
   world(std::string& name, float scale)
-      : object(name, NULL, scale), 
+      : object(name, world_mesh, scale), 
         distance(1.0f),
         friction(0.0f),
         force(1.0f),
@@ -165,8 +168,7 @@ public:
     }
   }
 
-  void draw(glm::mat4 &vp_matrix) const override {};
-  void draw(glm::mat4 &vp_matrix, float scale) const override {};
+  static void gen_vertex_data(line_mesh &mesh);
   void show() const override;
   int get_type_code() const override { return 0; };
   void update(float delta) override;
@@ -207,6 +209,19 @@ public:
       : object(name, particle::particle_mesh, scale) {}
   void show() const override;
   int get_type_code() const override { return 2; };
+};
+
+class spring : public object {
+  float m_extension;
+  glm::mat4 model_matrix() const override;
+public:
+  float rotation;
+  static mesh* spring_mesh;
+  spring(std::string& name, float scale)
+      : object(name, spring_mesh, scale), m_extension(0.0f) {}
+  static void gen_vertex_data(unsigned int nodes, float coil_width, mesh &mesh);
+  void show() const override;
+  int get_type_code() const override { return 4; };
 };
 
 

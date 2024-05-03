@@ -24,7 +24,7 @@ static object * create_plane(std::string& name) {
 }
 
 static object * create_world(std::string& name) {
- return new world(name, 3); 
+ return new world(name, 300); 
 }
 
 // show the main gui tree
@@ -130,7 +130,7 @@ void GUI::show(environment& env) {
             ImGui::Text((std::string("press enter to create ") + name).c_str());
             {
               bool spawn = false;
-              static char buf1[64];
+              static char buf1[64] = "world";
               if (ImGui::InputText(" ", buf1, 64, ImGuiInputTextFlags_EnterReturnsTrue)) {
                 spawn = true; 
               }
@@ -143,7 +143,7 @@ void GUI::show(environment& env) {
               if (env.get_selection())
                 // iterate selection if it exists
                 node = env.get_selection(); 
-              auto traverse = env.objects->get_traversal_state(traversal_state<object*>::PREORDER);
+              auto traverse = node->get_traversal_state(traversal_state<object*>::PREORDER);
               // iterate nodes
               while(traverse.next()) {
                 if (traverse.get_item()->get_name() == s_input) {
@@ -190,8 +190,8 @@ void GUI::show(environment& env) {
 
     // dynamically generate tab items for each object class
     // links creation functions
-    tab_item(env, "particle", create_particle);
     tab_item(env, "world", create_world);
+    tab_item(env, "particle", create_particle);
     tab_item(env, "plane", create_plane);
     ImGui::EndTabBar();
   }

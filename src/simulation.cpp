@@ -43,5 +43,7 @@ void pp::start() {
     // set timestamp 
     m_time.begin();
     // snap plane to starting position in case it was not already there
-    m_plane->position = glm::vec3(0.0f, 0.0f, 0.0f);
+    m_plane->position = m_world->position;
 }
+
+

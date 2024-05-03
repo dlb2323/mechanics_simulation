@@ -1,4 +1,5 @@
 #include "object.hpp"
+#include "GLFW/glfw3.h"
 #include "simulation.hpp"
 #include <cmath>
 #include "utils.h"
@@ -95,14 +96,62 @@ void object::draw(glm::mat4& vp_matrix, float scale) const {
 }
 
 // world
+line_mesh* world::world_mesh;
+
 glm::mat4 world::model_matrix() const {
-  return glm::mat4();
+  glm::mat4 model = glm::mat4(1.0f);
+  model = glm::translate(model, position);
+  model = glm::rotate(model, (float)glfwGetTime()/20, glm::vec3(0.0f, 1.0f, 0.0f));
+  model = glm::scale(model, glm::vec3(1.0f)*m_scale);
+  return model;
 }
 
 void world::update(float delta) {
+  object::update(delta);
   if (GUI::get_state() == GUI::SIMULATE) {
     current_simulation->update();
   }
+}
+
+
+void world::gen_vertex_data(line_mesh &plane_mesh) {
+  int data_locations = 8*3;
+  // vertices form a square in 2d space
+  float* data = new float[data_locations] {
+    -0.5f, -0.5f, 0.5f,
+    0.5f, -0.5f, 0.5f,
+    0.5f, 0.5f, 0.5f,
+    -0.5f, 0.5f, 0.5f,
+    -0.5f, -0.5f, -0.5f,
+    0.5f, -0.5f, -0.5f,
+    0.5f, 0.5f, -0.5f,
+    -0.5f, 0.5f, -0.5f
+  };
+  int vertices = 3*4*2;
+  int* tree = new int[vertices] {
+    0, 1, 1, 2, 2, 3, 3, 0, // front face 
+    0, 4, 1, 5, 2, 6, 3, 7, // connections
+    4, 5, 5, 6, 6, 7, 7, 4, // back face
+  };
+
+  // opengl bind vertex buffers for writing
+  plane_mesh.write_begin();
+  glEnableVertexAttribArray(0);
+  glBufferData(GL_ARRAY_BUFFER, data_locations * sizeof(float), data,
+               GL_STATIC_DRAW);
+  /* use the element array buffer to indicate which indices to draw */
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertices * sizeof(int), tree,
+               GL_STATIC_DRAW);
+  /* set the vertex attributes pointers */
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+  // clean up data from heap
+  delete[] tree;
+  delete[] data;
+  // stop writing to vertex buffers
+  plane_mesh.write_end();
+  // set the number of elements to draw
+  plane_mesh.set_elements(vertices);
 }
 
 void world::child_added(object* child) {
@@ -331,5 +380,45 @@ glm::mat4 particle::model_matrix() const {
 
 void particle::show() const {
   ImGui::SliderFloat("scale", (float *)&m_scale, 0.0f, 30.0f);
+    (*m_value_modified)(callback_node);
+}
+
+// spring
+mesh* spring::spring_mesh;
+
+glm::mat4 spring::model_matrix() const {
+  return glm::mat4();
+}
+
+void spring::gen_vertex_data(unsigned int nodes, float coil_width, mesh &mesh) {
+  int data_locations = 4*3;
+  // vertices form a square in 2d space
+  float* data = new float[data_locations];
+
+  int vertices = 6;
+  int* tree = new int[vertices];
+
+  // opengl bind vertex buffers for writing
+  mesh.write_begin();
+  glEnableVertexAttribArray(0);
+  glBufferData(GL_ARRAY_BUFFER, data_locations * sizeof(float), data,
+               GL_STATIC_DRAW);
+  /* use the element array buffer to indicate which indices to draw */
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertices * sizeof(int), tree,
+               GL_STATIC_DRAW);
+  /* set the vertex attributes pointers */
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+
+  // clean up data from heap
+  delete[] tree;
+  delete[] data;
+  // stop writing to vertex buffers
+  mesh.write_end();
+  // set the number of elements to draw
+  mesh.set_elements(vertices);
+}
+
+void spring::show() const {
+  if (ImGui::InputFloat("extension", (float*)&m_extension))
     (*m_value_modified)(callback_node);
 }
