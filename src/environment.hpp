@@ -73,6 +73,7 @@ public:
     selection = object;
   }
   tree_node<object*>* get_selection() const { return selection; }; 
+
   void deselect(bool reselect = false) {
     if (selection) {
       selection->get_data()->deselect();

@@ -1,9 +1,7 @@
 #include "environment.hpp"
 #include "tree.hpp"
+#include "object.hpp"
 
-glm::vec3 lerp(glm::vec3 x, glm::vec3 y, float t) {
-  return x * (1.f - t) + y * t;
-}
 
 // camera
 
@@ -20,8 +18,6 @@ void camera::track(glm::vec3 *target) {
   m_start = m_position;
   m_mode = camera::MODE::TRACK;
 }
-
-double camera::smooth(double x) { return tanh(sqrt(x) * 6 - M_PI) / 2 + 0.503; }
 
 void camera::update() {
   switch (m_mode) {
@@ -56,14 +52,9 @@ void camera::update() {
 
 // environment
 environment::environment(GLFWwindow *window)
-    : window(window),
-      main_shader("vertex_shader.glsl", "fragment_shader.glsl"),
-      single_colour("vertex_shader.glsl", "single_colour_shader.glsl"),
-      particle_mesh(&main_shader) {
-    std::string r = "root";
-  objects = tree_node<object*>::create_new(new world(&particle_mesh, 1, &single_colour));
+    : window(window) {
+  objects = tree_node<object*>::create_new(new world(plane::plane_mesh, 1.0f));
   selection = NULL;
-  particle::gen_vertex_data(120, particle_mesh);
 }
 environment::~environment() {
   auto traverse = objects->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
@@ -74,13 +65,19 @@ environment::~environment() {
 
 camera environment::current_camera;
 
-void environment::update(float delta) {}
+void environment::update(float delta) {
+  auto itr = objects->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
+  while(itr.next()) {
+    itr.get_item()->update(delta);
+  }
+}
 
-tree_node<object*>* environment::create(std::string &name, unsigned int radius) {
-  particle *n = new particle(name, &particle_mesh, radius, &single_colour);
-  tree_node<object*>* node = tree_node<object*>::create_new(n);
-  select(node);  
-  objects->insert_node(node);
+tree_node<object*>* environment::create(object* o) {
+  tree_node<object*>* node = tree_node<object*>::create_new(o);
+  if (selection)
+    selection->insert_node(node);
+  else
+    objects->insert_node(node);
   // messy
   return node;
 }

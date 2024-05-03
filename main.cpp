@@ -143,6 +143,10 @@ int main() {
   mesh particle_mesh(&main);
   particle::gen_vertex_data(120, particle_mesh);
   particle::particle_mesh = &particle_mesh;
+
+  mesh plane_mesh(&main);
+  plane::gen_vertex_data(plane_mesh);
+  plane::plane_mesh = &plane_mesh;
   environment env(window);
 
   timestamp delta;
@@ -157,8 +161,8 @@ int main() {
     GUI::show(env);
 
     // update
-    env.update(delta.get_elapsed_time());
     environment::current_camera.update();
+    env.update(delta.get_elapsed_time());
 
     // draw
     glClearColor(0.529, 0.808, 0.98, 0.7);
