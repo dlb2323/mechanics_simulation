@@ -1,4 +1,4 @@
-#include "window.h"
+#include "window.hpp"
 
 void window::swapBuffers() {
 	glfwSwapBuffers(window_id);
