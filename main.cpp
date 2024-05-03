@@ -1,25 +1,39 @@
 #include <iostream>
 #include "GLFW/glfw3.h"
 
-int main() {
-	GLFWwindow *window;
+class window {
+	GLFWwindow *window_id;
 
+	public:
+	window(const char * name, unsigned int size_x, unsigned int size_y) {
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		window_id = glfwCreateWindow(size_x, size_y, name, NULL, NULL);
+	}
+
+	void makeCurrent();
+
+};
+
+void window::makeCurrent() {
+	glfwMakeContextCurrent(window_id);
+}
+
+int main() {
 	if (!glfwInit())
 		return -1; // exit the system on the event of failure
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	window = glfwCreateWindow(900, 900, "mechanics_simulation", NULL, NULL);
+	window mainWindow("mechanics_simulation", 900, 900);
+	mainWindow.makeCurrent();
 
-	if (!window) {
+	/* if (!window) {
 		glfwTerminate();
 		return -1; // terminate glfw and exit system 
 	} else {
 		// glfwSetCursorPosCallback(window, mouse_callback);
-	}
+	} */
 
-	glfwMakeContextCurrent(window);
 	std::string r;
 	std::cin >> r; 
 
