@@ -153,7 +153,7 @@ public:
         mass(1.0f),
         u_velocity(0.0f),
         elasticity(0.5f)
-  { simulation_objects = {NULL, NULL};
+  { simulation_objects = {NULL, NULL, NULL};
     current_simulation = NULL; }
   ~world() { delete current_simulation; }
 
@@ -186,7 +186,7 @@ public:
   float length;
   static mesh* plane_mesh;
   plane(std::string& name, float scale)
-      : object(name, plane_mesh, scale), rotation(3*M_PI/8), length(3.0f) {}
+      : object(name, plane_mesh, scale, glm::vec3(0.133, 0.11, 0.208)), rotation(3*M_PI/8), length(3.0f) {}
   static void gen_vertex_data(mesh &mesh);
   void show() const override;
   int get_type_code() const override { return 1; };
@@ -226,7 +226,7 @@ public:
   static mesh* spring_mesh;
   static mesh* spring_mesh_highlight;
   spring(std::string& name, float scale)
-      : object(name, spring_mesh, scale), extension(0.0f), length(1.0f) {}
+      : object(name, spring_mesh, scale, glm::vec3(0.667f, 0.663f, 0.678f)), extension(0.0f), length(1.0f) {}
   static void gen_vertex_data(const int coils, const int nodes, const float coil_width, const float thickness, mesh &mesh);
   void show() const override;
   void draw(glm::mat4 &vp_matrix, float scale) const override;
