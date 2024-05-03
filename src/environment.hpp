@@ -100,6 +100,7 @@ public:
   }
   // selection getter
   tree_node<object*>* get_selection() const { return selection; }; 
+  tree_node<object*>* get_simulation() const { return simulation; };
 
   // deselect currently selected node
   // if reselect is enabled, the first valid leaf from 

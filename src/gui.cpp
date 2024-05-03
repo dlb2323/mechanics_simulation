@@ -3,8 +3,6 @@
 #include "object.hpp"
 #include "environment.hpp"
 #include <string>
-
-#define DEBUG
 #include "utils.h"
 
 GUI::STATE GUI::state;
@@ -162,7 +160,7 @@ void GUI::show(environment& env) {
                 ImGui::Text("name conflict");
               }
               static int count = 1;
-              ImGui::InputInt("count", &count);
+              ImGui::InputInt("  ", &count);
               // create 'count' objects and add them to gui tree at 'node'
               // used to spawn multiple objects in one command
               // does not activate while simulating
@@ -208,22 +206,14 @@ void GUI::show(environment& env) {
   if (GUI::state == GUI::EDIT){
       // in gui state edit, create a child menu to display the object tree
       ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
-      ImGui::BeginChild("Objects", ImVec2(ImGui::GetContentRegionAvail().x, 500), ImGuiChildFlags_None, window_flags);
+      ImGui::BeginChild("Objects", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y/2), ImGuiChildFlags_None, window_flags);
       // recursively show object tree entries
       GUI::show_object_tree(env.objects, env);
       ImGui::EndChild();
-  } else {
+  } 
+  if (GUI::state == GUI::SIMULATE){
     // in gui state simulate, calculate and show simulation data
-    // float a = (env.subjects.w->force-env.subjects.w->mass*env.subjects.w->gravity*sin(env.subjects.pl->rotation))/env.subjects.w->mass;
-    // float r = (
-    //   ((env.subjects.w->force - env.subjects.w->mass*env.subjects.w->gravity
-    //   *sin(env.subjects.pl->rotation)))
-    //   /2*env.subjects.w->mass)
-    //   *env.subjects.time.get_elapsed_time()*env.subjects.time.get_elapsed_time() 
-    //   + env.subjects.w->u_velocity*env.subjects.time.get_elapsed_time();
-    // ImGui::Text((std::string("time elapsed: ") + std::to_string(env.subjects.time.get_elapsed_time())).c_str());
-    // ImGui::Text((std::string("acceleration: ") + std::to_string(a)).c_str());
-    // ImGui::Text((std::string("displacement: ") + std::to_string(r)).c_str());
+      env.get_simulation()->get_data()->show();
   }
 
   ImGui::Spacing();

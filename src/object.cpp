@@ -248,13 +248,18 @@ void world::child_removed(object* child) {
 }
 
 void world::show() const {
-  // display simulation options with imgui
-  float old_distance = distance;
-  ImGui::InputFloat("time scale", (float*)&time_scale, 1.0f, 10.0f);
-  if (ImGui::InputFloat("x", (float*)&distance, 1.0f, 10.0f))
-    reset_simulation((GUIitem*)this);
-  ImGui::InputFloat("gravity", (float*)&gravity, 0.0f, 10.0f);
-  ImGui::InputFloat("restitution", (float*)&restitution, 0.0f, 10.0f);
+    if (GUI::get_state() == GUI::EDIT) {
+        // display simulation options with imgui
+        float old_distance = distance;
+        ImGui::InputFloat("time scale", (float*)&time_scale, 1.0f, 10.0f);
+        if (ImGui::InputFloat("x", (float*)&distance, 1.0f, 10.0f))
+            reset_simulation((GUIitem*)this);
+        ImGui::InputFloat("gravity", (float*)&gravity, 0.0f, 10.0f);
+        ImGui::InputFloat("restitution", (float*)&restitution, 0.0f, 10.0f);
+    }
+    if (GUI::get_state() == GUI::SIMULATE) {
+        current_simulation->show();
+    }
 }
 
 // point

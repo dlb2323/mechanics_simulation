@@ -6,7 +6,6 @@
 #endif
 
 // debug output
-#define DEBUG
 #ifdef DEBUG
 #include "stdio.h"
 #define DEBUG_TEXT(message) printf("[DEBUG] :: %s\n", message);  

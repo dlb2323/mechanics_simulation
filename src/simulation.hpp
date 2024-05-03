@@ -2,10 +2,13 @@
 #define SIMULATION_H
 
 #include <chrono>
+#include <string>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "imgui.h"
 
 class world;
 class particle;
@@ -40,6 +43,9 @@ public:
   virtual void update() = 0;
   virtual void start() = 0;
   virtual void end() = 0;
+  virtual void show() {
+      ImGui::Text((std::string("time: ") + std::to_string(get_time())).c_str());
+  }
 };
 
 // simulation of a particle and a plane

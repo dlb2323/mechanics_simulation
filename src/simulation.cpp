@@ -21,6 +21,7 @@ void pp::reset() {
 
 void pp::end() {
   reset();
+  environment::current_camera.snap_to(m_world->position);
 }
 
 void pp::update() {
@@ -75,6 +76,7 @@ void spp::reset() {
 void spp::end() {
   m_spring->extension = extension;
   reset();
+  environment::current_camera.snap_to(m_world->position);
 }
 
 void spp::update() {
@@ -130,7 +132,10 @@ ppp::ppp(world* world, particle* particle1, particle* particle2, plane* plane) :
     m_particle1(particle1),
     m_particle2(particle2),
     m_plane(plane) {
+    m_world->distance = 10.0f;
     reset();
+    m_particle1->force = 0.0f;
+    m_particle2->force = 0.0f;
 }
 
 void ppp::reset() {
@@ -185,8 +190,8 @@ void ppp::start() {
 
 void ppp::end() {
     environment::current_camera.zoom = 8.0f;
-    environment::current_camera.focus(m_plane->position);
     reset();
+    environment::current_camera.snap_to(m_world->position);
 }
 
 
