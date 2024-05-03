@@ -14,21 +14,25 @@
 #include "shader.hpp"
 #include "object.hpp"
 
-
+// camera class
+// generates view matrix for draw phase
 class camera {
+  // motion modes
   enum MODE { STILL, FOCUS, TRACK };
   glm::vec3 m_position;
   glm::vec3 m_start;
   glm::vec3 m_focus_point;
   glm::vec3 *m_p_target;
   timestamp m_timestamp;
+  // time taken to reach destination position
   const double m_total_time = 0.5;
   camera::MODE m_mode;
 
 public:
+  // zoom level
   float zoom = 8.0f;
-  float rotation = M_PI / 4;
   camera() {
+    // focus on the zero vector on initialisation
     glm::vec3 point(0.0f);
     focus(point);
   }
@@ -37,44 +41,57 @@ public:
 
   void update();
 
+  // generate view matrix for draw phase
   glm::mat4 get_view_matrix() const {
     glm::mat4 view(1.0f);
+    // m_position holds the position of the camera's focus
+    // offset from this location and scale by zoom level
     glm::vec3 position = m_position + glm::vec3(0, 5, -10) * zoom;
+    // transform to focus on the target position
     view = glm::lookAt(position, m_position, glm::vec3(0.0f, 1.0f, 0.0f));
     return view;
   }
 };
 
+// forward declare tree
 template<class T>
 class tree_node;
 
-// world rendering
+// environment class
+// holds object tree and simulation setting
+// draws and update objects
 class environment {
+  // projection matrix for draw phase
   glm::mat4 proj;
+  // hold pointer to currently selected object
   tree_node<object*>* selection;
 public:
+  // define struct to hold simulation data
   typedef struct {
     world* w;
     plane* pl;
     particle* pa;
     timestamp time;
   } simulation;
+  // declare simulation struct
   simulation subjects;
+  // declare object tree as type object*
   tree_node<object*>* objects;
+  // glfw window pointer, constant once defined
   GLFWwindow *const window;
+  // declare camera as a static member
   static camera current_camera;
+
   environment(GLFWwindow *window);
   ~environment(); 
+
   void update(float delta);
   void draw();
   bool is_simulation_legal();
   void simulation_start();
   glm::vec3 simulation_func();
   tree_node<object*>* create(object* object);
-  // int object_count() const { return objects.size(); }
-  // object *object_at(unsigned int idx) {
-  //   return (idx < objects.size()) ? objects[idx] : NULL;
-  // };
+
   void select(tree_node<object*>* node) {
     selection = node;
   }
