@@ -2,6 +2,7 @@
 #define WINDOW_H
 
 #define GLFW_INCLUDE_NONE
+#include <iostream>
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
 
@@ -13,11 +14,12 @@ class window {
 	GLFWwindow *window_id;
 
 	public:
-	window(const char * name, unsigned int size_x, unsigned int size_y) {
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	window(std::string name, unsigned int size_x, unsigned int size_y) {
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-		window_id = glfwCreateWindow(size_x, size_y, name, NULL, NULL);
+		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);  
+		window_id = glfwCreateWindow(size_x, size_y, name.c_str(), NULL, NULL);
 	}
 
 	bool exists();
