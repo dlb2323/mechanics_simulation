@@ -66,15 +66,6 @@ class environment {
   // hold pointer to currently selected object
   tree_node<object*>* selection;
 public:
-  // define struct to hold simulation data
-  typedef struct {
-    world* w;
-    plane* pl;
-    particle* pa;
-    timestamp time;
-  } simulation;
-  // declare simulation struct
-  simulation subjects;
   // declare object tree as type object*
   tree_node<object*>* objects;
   // glfw window pointer, constant once defined
@@ -89,8 +80,6 @@ public:
   void draw();
   void create(object* object);
   bool is_simulation_legal();
-  void simulation_start();
-  glm::vec3 simulation_func();
 
   // pass in node to select
   void select(tree_node<object*>* node) {
