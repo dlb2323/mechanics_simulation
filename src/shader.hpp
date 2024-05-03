@@ -61,9 +61,13 @@ public:
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
   }
+  ~shader() {
+    glDeleteProgram(m_program);
+  }
 
   void bind();
   void unbind();
+  unsigned int get_uniform_location(std::string name);
 };
 
 #endif // !SHADER_H

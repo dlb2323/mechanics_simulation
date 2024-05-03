@@ -7,10 +7,13 @@
 #include "src/sphere.hpp"
 #include "src/window.hpp"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 // gen sphere
 // gl stuff
 // abstraction
-#include <cmath>
 void error_callback(int error, const char *description) {
   std::cerr << "Error: %s\n" << description;
 }
@@ -94,6 +97,7 @@ void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id,
   }
   std::cout << std::endl;
   std::cout << std::endl;
+  std::cin.get();
 }
 
 int main() {
@@ -109,10 +113,14 @@ int main() {
     exit(EXIT_FAILURE);
   }
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-  shader sphere_shader(std::string("vertex_shader.glsl"),
-                       std::string("fragment_shader.glsl"));
-  vertexObject sphere_object(&sphere_shader);
 
+  glEnable(GL_DEPTH_TEST);
+#ifdef DRAW_WIREFRAME
+  /* set drawing to wireframe mode */
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+#endif
+
+  /* debugging */
   int flags;
   glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
   if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
@@ -123,13 +131,15 @@ int main() {
                           GL_DEBUG_SEVERITY_HIGH, 0, nullptr, GL_TRUE);
   }
 
-  unsigned int VAO;
-  glGenVertexArrays(1, &VAO);
-  glBindVertexArray(VAO);
-  glEnableVertexAttribArray(0);
-  gen_sphere_vertex_data(12, &sphere_object);
-  glBindVertexArray(GL_NONE);
+  // end
 
+  int nodes = 120;
+  shader sphere_shader("vertex_shader.glsl", "fragment_shader.glsl");
+  const unsigned int mvp_location = sphere_shader.get_uniform_location("u_mvp");
+  const unsigned int time_location =
+      sphere_shader.get_uniform_location("u_time");
+  vertexObject sphere_object(&sphere_shader);
+  sphere_object.set_elements(sphere::gen_vertex_data(nodes, sphere_object));
   sphere test(&sphere_object, 5);
 
   while (!mainWindow.shouldClose()) {
@@ -139,30 +149,37 @@ int main() {
     glClearColor(0.2, 0.3, 0.3, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    float floats[] = {
-      0.5f, 0.5f, 0.0f,
-      0.5f, -0.5f, 0.0f,
-      -0.5f, -0.5f, 0.0f
-    };
+    int width, height;
+    glfwGetFramebufferSize(mainWindow.getWindow(), &width, &height);
 
-    sphere_shader.bind();
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    unsigned int _VAO;
-    glGenVertexArrays(1, &_VAO);
-    glBindVertexArray(_VAO);
-    glEnableVertexAttribArray(0);
-    glBufferData(GL_ARRAY_BUFFER, 9*sizeof(float), floats, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    // draw
+    glm::mat4 proj = glm::perspective((float)(M_PI / 4), (float)width / height,
+                                      0.1f, 100.0f);
+    glm::mat4 view = glm::mat4(1.0f);
+    view = glm::translate(view, glm::vec3(-20.0f, -20.0f, -100.0f));
+    sphere_object.bind();
+    for (int i = 0; i < 30; i++) {
+      for (int j = 0; j < 30; j++) {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(i*5*2, j*5*2, 0.0f));
+        model = glm::rotate(model, (float)glfwGetTime() / 20,
+                            glm::vec3(1.0f, 0.0f, 1.0f));
+        model = glm::scale(
+            model, glm::vec3(test.m_radius, test.m_radius, test.m_radius));
+        glm::mat4 mvp = proj * view * model;
+        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp));
+        glUniform1f(time_location, (float)glfwGetTime());
+        sphere_object.draw();
+      }
+    }
+    // glDrawElements(GL_TRIANGLES,
+    // (int)((sin(glfwGetTime()/12)+1)/2*nodes*nodes*6), GL_UNSIGNED_INT, 0);
+    sphere_object.unbind();
 
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 144 * 6, GL_UNSIGNED_INT, 0);
     mainWindow.swapBuffers();
     glfwPollEvents();
 
-    glGetError();  
+    glGetError();
   }
 
   glfwTerminate();
