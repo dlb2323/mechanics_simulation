@@ -142,7 +142,7 @@ int main() {
   shader::single_colour = &single_colour;
 
   mesh particle_mesh(&main);
-  particle::gen_vertex_data(120, particle_mesh);
+  particle::gen_vertex_data(12, particle_mesh);
   particle::particle_mesh = &particle_mesh;
 
   mesh plane_mesh(&main);
@@ -162,8 +162,8 @@ int main() {
     GUI::show(env);
 
     // update
-    environment::current_camera.update();
     env.update(delta.get_elapsed_time());
+    environment::current_camera.update();
 
     // draw
     glClearColor(0.529, 0.808, 0.98, 0.7);

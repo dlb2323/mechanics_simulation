@@ -53,7 +53,7 @@ void camera::update() {
 // environment
 environment::environment(GLFWwindow *window)
     : window(window) {
-  subjects = {NULL, NULL, NULL, NULL, NULL};
+  subjects = {NULL, NULL, NULL};
   objects = tree_node<object*>::create_new(new world(plane::plane_mesh, 1.0f));
   subjects.w = (world*)objects->get_data();
   selection = NULL;
@@ -67,6 +67,7 @@ environment::~environment() {
 
 camera environment::current_camera;
 
+
 void environment::update(float delta) {
   auto itr = objects->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
   while(itr.next()) {
@@ -75,15 +76,46 @@ void environment::update(float delta) {
   if (is_simulation_legal()) {
     subjects.pl->move_to(glm::vec3(0.0f, 0.0f, 0.0f));
     float l = subjects.w->distance;
-    subjects.pl->length = l/15;
+    // subjects.pl->length = l/15;
     glm::mat4 t(1.0f);
-    t = glm::rotate(t, (subjects.pl->rotation)+(float)M_PI/2.0f, glm::vec3(0.0f, 0.0f, -1.0f));
+    t = glm::rotate(t, (subjects.pl->rotation), glm::vec3(0.0f, 0.0f, -1.0f));
     t = glm::translate(t, glm::vec3(l, 0.0f, 0.0f));
     glm::vec3 offset = t[3];
-    subjects.point_a->move_to(offset+glm::vec3(0.0f, 10.0f, 0.0f));
-    subjects.point_b->move_to(-offset+glm::vec3(0.0f, 10.0f, 0.0f));
-    subjects.pa->move_to(offset+glm::vec3(0.0f, 10.0f, 0.0f));
+    subjects.pa->move_to(offset*l+glm::vec3(0.0f, 10.0f, 0.0f));
   }
+  if (GUI::get_state() == GUI::SIMULATE) {
+    subjects.pa->position = simulation_func();
+  }
+}
+
+glm::vec3 environment::simulation_func() {
+  float l = subjects.w->distance;
+  glm::mat4 t(1.0f);
+  t = glm::rotate(t, (subjects.pl->rotation), glm::vec3(0.0f, 0.0f, -1.0f));
+  t = glm::translate(t, glm::vec3(l, 0.0f, 0.0f));
+  glm::vec3 offset = t[3];
+  glm::vec3 position = offset*l+glm::vec3(0.0f, 10.0f, 0.0f); 
+  float r = (
+    ((subjects.w->force - subjects.w->mass*subjects.w->gravity
+    *sin(subjects.pl->rotation)))
+    /2*subjects.w->mass)
+    *subjects.time.get_elapsed_time()*subjects.time.get_elapsed_time() 
+    + subjects.w->u_velocity*subjects.time.get_elapsed_time();
+  return position - glm::normalize(offset)*r*subjects.pa->get_radius();
+}
+
+void environment::simulation_start() {
+    deselect();
+    current_camera.track(&subjects.pa->position);
+    subjects.time.begin();
+    subjects.pl->position = glm::vec3(0.0f, 0.0f, 0.0f);
+    float l = subjects.w->distance;
+    // subjects.pl->length = l/15;
+    glm::mat4 t(1.0f);
+    t = glm::rotate(t, (subjects.pl->rotation), glm::vec3(0.0f, 0.0f, -1.0f));
+    t = glm::translate(t, glm::vec3(l, 0.0f, 0.0f));
+    glm::vec3 offset = t[3];
+    subjects.pa->position = offset*l+glm::vec3(0.0f, 10.0f, 0.0f);
 }
 
 tree_node<object*>* environment::create(object* o) {
@@ -100,27 +132,21 @@ tree_node<object*>* environment::create(object* o) {
   o->move_to(pos); 
   switch (o->get_type_code()) {
     case 1:
-      subjects.pl = (plane*)o;
-      break;
-    case 2: {
-      if (subjects.point_a)
-        subjects.point_b = (point*)o;
-      else
-        subjects.point_a = (point*)o;
-      }
+      if (!subjects.pl)
+        subjects.pl = (plane*)o;
       break;
     case 3:
-      subjects.pa = (particle*)o;
+      if (!subjects.pa)
+        subjects.pa = (particle*)o;
     case 0:
     default:
     break;
   }
-  // messy
   return node;
 }
 
 bool environment::is_simulation_legal() {
-  return subjects.w && subjects.point_a && subjects.point_b && subjects.pl && subjects.pa;
+  return subjects.w && subjects.pl && subjects.pa;
 }
 
 void environment::draw() {
