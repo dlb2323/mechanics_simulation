@@ -25,12 +25,15 @@ class GUIitem;
 class GUI {
 public:
   enum STATE { EDIT,SIMULATE };
+private:
   static STATE state;
+public:
   GUI() {}
   static void show(environment& env);
   static void show_object_tree(tree_node<object*>* object, environment& env);
   static void help();
   static void particle_options(std::string name);
+  static STATE get_state() { return state; };
 };
 
 class GUIitem {

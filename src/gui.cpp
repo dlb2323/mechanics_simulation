@@ -2,6 +2,7 @@
 #include "object.hpp"
 #include "environment.hpp"
 
+GUI::STATE GUI::state;
 
 void GUI::show(environment& env) {
   static bool no_titlebar = false;
@@ -57,24 +58,32 @@ void GUI::show(environment& env) {
     ImGui::End();
     return;
   }
+  
+  if (ImGui::Button((GUI::state == GUI::EDIT ? "Start" : "Stop"), ImVec2(100, 30))) {
+      GUI::state = GUI::state == GUI::EDIT ? GUI::SIMULATE : GUI::EDIT;
+  }
+  if (GUI::state == GUI::SIMULATE) {
+    ImGui::SameLine(120.0f);
+    ImGui::Text("Simulating, GUI locked");
+  }
 
   // camera
-  ImGui::SliderFloat("zoom", &environment::current_camera.zoom,
-                     0.0f, 10.0f, "%.4f");
+  // implement scroll wheel zoom!
+  // ImGui::SliderFloat("zoom", &environment::current_camera.zoom,
+  //                    0.0f, 10.0f, "%.4f");
 
   ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
   if (ImGui::BeginTabBar("Objects", tab_bar_flags))
   {
-      if (ImGui::BeginTabItem("Sphere"))
+      if (ImGui::BeginTabItem("Particle"))
       {
-          ImGui::Text("Add Sphere");
+          ImGui::Text("Add Particle");
           const unsigned int input_text_charlen = 128;
-          ImGui::Text("list of particles: size %d", 1);
           {
             static int code = 65;
             char input[input_text_charlen] = {(char)code};
             ImGui::InputText("particle name", input, IM_ARRAYSIZE(input));
-            if (ImGui::Button("add particle")) {
+            if (ImGui::Button("create particle") && GUI::state != GUI::SIMULATE) {
               std::string input_string(input);
               bool match = false;
               // auto itr = env.
@@ -83,7 +92,7 @@ void GUI::show(environment& env) {
               //     break;
               if (!match) {
                 std::string s_input(input);
-                tree_node<object*>* p_object_node = env.create(s_input, 5);
+                tree_node<object*>* p_object_node = env.create(new particle(s_input, 5));
                 p_object_node->get_data()->position =
                     glm::vec3(std::rand() % 100 - 50, std::rand() % 100 - 50,
                               std::rand() % 100 - 50);
@@ -103,14 +112,75 @@ void GUI::show(environment& env) {
 
           ImGui::EndTabItem();
       }
-      if (ImGui::BeginTabItem("Broccoli"))
+      if (ImGui::BeginTabItem("Point"))
       {
-          ImGui::Text("This is the Broccoli tab!\nblah blah blah blah blah");
+          ImGui::Text("Create Point");
+          const unsigned int input_text_charlen = 128;
+          {
+            static int code = 65;
+            char input[input_text_charlen] = {(char)code};
+            ImGui::InputText("particle name", input, IM_ARRAYSIZE(input));
+            if (ImGui::Button("create point") && GUI::state != GUI::SIMULATE) {
+              std::string input_string(input);
+              bool match = false;
+              // auto itr = env.
+              //   if (env.object_at(i)->get_name() == input_string) {
+              //     match = true;
+              //     break;
+              if (!match) {
+                std::string s_input(input);
+                tree_node<object*>* p_object_node = env.create(new particle(s_input, 7));
+                glm::vec3 pos(std::rand() % 100 - 50, std::rand() % 100 - 50,
+                              std::rand() % 100 - 50);
+                p_object_node->get_data()->move_to(pos); 
+                code++;
+              }
+            }
+            ImGui::SameLine(364.0f);
+            if (ImGui::Button("remove object") && GUI::state != GUI::SIMULATE) {
+              auto node = env.get_selection();
+              if (node && node->get_data()->get_name() != "world") {
+                env.deselect(true);
+                tree_node<object*>::destroy(node);
+              }
+            }
+          }
           ImGui::EndTabItem();
       }
-      if (ImGui::BeginTabItem("Cucumber"))
+      if (ImGui::BeginTabItem("Plane"))
       {
-          ImGui::Text("This is the Cucumber tab!\nblah blah blah blah blah");
+          ImGui::Text("Create Plane");
+          const unsigned int input_text_charlen = 128;
+          {
+            static int code = 65;
+            char input[input_text_charlen] = {(char)code};
+            ImGui::InputText("particle name", input, IM_ARRAYSIZE(input));
+            if (ImGui::Button("create plane") && GUI::state != GUI::SIMULATE) {
+              std::string input_string(input);
+              bool match = false;
+              // auto itr = env.
+              //   if (env.object_at(i)->get_name() == input_string) {
+              //     match = true;
+              //     break;
+              if (!match) {
+                std::string s_input(input);
+                tree_node<object*>* p_object_node = env.create(new particle(s_input, 3));
+                p_object_node->get_data()->position =
+                    glm::vec3(std::rand() % 100 - 50, std::rand() % 100 - 50,
+                              std::rand() % 100 - 50);
+                environment::current_camera.track(&p_object_node->get_data()->position);
+                code++;
+              }
+            }
+            ImGui::SameLine(364.0f);
+            if (ImGui::Button("remove object") && GUI::state != GUI::SIMULATE) {
+              auto node = env.get_selection();
+              if (node && node->get_data()->get_name() != "world") {
+                env.deselect(true);
+                tree_node<object*>::destroy(node);
+              }
+            }
+          }
           ImGui::EndTabItem();
       }
       ImGui::EndTabBar();
@@ -121,78 +191,9 @@ void GUI::show(environment& env) {
   ImGui::Spacing();
 
   GUI::show_object_tree(env.objects, env);
-
-  // {
-  //   static ImGuiTreeNodeFlags base_flags =
-  //       ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
-  //       ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_SpanAllColumns;
-  //   static bool align_label_with_current_x_position = false;
-  //   static bool test_drag_and_drop = false;
-  //   if (align_label_with_current_x_position)
-  //     ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
-  //
-  //   // 'selection_mask' is dumb representation of what may be user-side
-  //   // selection state.
-  //   //  You may retain selection state inside or outside your objects in
-  //   //  whatever format you see fit.
-  //   // 'node_clicked' is temporary storage of what node we have clicked to
-  //   // process selection at the end
-  //   /// of the loop. May be a pointer to your own node type, etc.
-  //   static int selection_mask = (1 << 2);
-  //   int node_clicked = -1;
-  //   for (int i = 0; i < env.object_count(); i++) {
-  //     // Disable the default "open on single-click behavior" + set Selected
-  //     // flag according to our selection. To alter selection we use
-  //     // IsItemClicked() && !IsItemToggledOpen(), so clicking on an arrow
-  //     // doesn't alter selection.
-  //     ImGuiTreeNodeFlags node_flags = base_flags;
-  //     const bool is_selected = (selection_mask & (1 << i)) != 0;
-  //     if (is_selected)
-  //       node_flags |= ImGuiTreeNodeFlags_Selected;
-  //     if (i < env.object_count()) {
-  //       ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-  //       bool node_open = ImGui::TreeNodeEx((void *)(intptr_t)i, node_flags,
-  //                                          env.object_at(i)->get_name().c_str());
-  //       if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
-  //         node_clicked = i;
-  //       if (test_drag_and_drop && ImGui::BeginDragDropSource()) {
-  //         ImGui::SetDragDropPayload("_TREENODE", NULL, 0);
-  //         ImGui::Text("This is a drag and drop source");
-  //         ImGui::EndDragDropSource();
-  //       }
-  //       if (node_open) {
-  //         ImGui::Text("properties");
-  //         ImGui::TreePop();
-  //       }
-  //     }
-  //   }
-  //   if (node_clicked != -1) {
-  //     // Update selection state
-  //     // (process outside of tree loop to avoid visual inconsistencies during
-  //     // the clicking frame)
-  //     if (ImGui::GetIO().KeyCtrl)
-  //       selection_mask ^= (1 << node_clicked); // CTRL+click to toggle
-  //     else // if (!(selection_mask & (1 << node_clicked))) // Depending on
-  //          // selection behavior you want, may want to preserve selection when
-  //          // clicking on item that is part of the selection
-  //       selection_mask = (1 << node_clicked); // Click to single-select
-  //
-  //     if (env.object_at(node_clicked)) {
-  //       environment::current_camera.track(&env.object_at(node_clicked)->position);
-  //       env.select(env.object_at(node_clicked));
-  //     }
-  //     else
-  //       std::cout << "ERROR SELECTING NON-EXISTING OBJECT\n";
-  //   }
-  //   if (align_label_with_current_x_position)
-  //     ImGui::Indent(ImGui::GetTreeNodeToLabelSpacing());
-  // }
-
-
-
   ImGui::Spacing();
 
-  GUI::help();
+  // GUI::help();
 
   ImGui::End();
 }
@@ -213,6 +214,7 @@ void GUI::show_object_tree(tree_node<object*>* object, environment& env) {
       environment::current_camera.focus(object->get_data()->position);
     }
     object->get_data()->show();
+    ImGui::Separator();
     for (int i = 0; i < object->get_child_count(); i++)
       GUI::show_object_tree(object->get_child(i), env);
     ImGui::TreePop();
