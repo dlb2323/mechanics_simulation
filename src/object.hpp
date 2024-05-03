@@ -142,7 +142,6 @@ public:
   float friction;
   float force;
   float gravity;
-  float mass;
   float u_velocity;
   world(std::string& name, float scale)
       : object(name, world_mesh, scale), 
@@ -151,7 +150,6 @@ public:
         friction(0.0f),
         force(1.0f),
         gravity(9.8f),
-        mass(1.0f),
         u_velocity(0.0f)
   { simulation_objects = {NULL, NULL, NULL};
     current_simulation = NULL; }
@@ -198,9 +196,10 @@ public:
 class particle : public object {
   glm::mat4 model_matrix() const override;
 public:
+  float mass;
   static mesh* particle_mesh;
   particle(std::string &name, float scale)
-      : object(name, particle_mesh, scale, glm::vec3(0.0f, 0.0f, 1.0f)) {}
+      : object(name, particle_mesh, scale, glm::vec3(0.0f, 0.0f, 1.0f)), mass(1.0f) {}
   static void gen_vertex_data(unsigned int nodes, mesh &mesh);
   // get radius size
   float get_radius() const { return m_scale; };

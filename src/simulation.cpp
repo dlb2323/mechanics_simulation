@@ -32,9 +32,9 @@ void pp::update() {
   glm::vec3 start = t[3];
   // calculate displacement parallel to the plane
   float r = (
-    ((m_world->force - m_world->mass*m_world->gravity
+    ((m_world->force - m_particle->mass*m_world->gravity
     *sin(m_plane->rotation)))
-    /2*m_world->mass)
+    /2*m_particle->mass)
     *get_time()*get_time() 
     + m_world->u_velocity*get_time();
   m_particle->position = offset+m_world->position+start*m_world->distance+glm::normalize(start)*r*m_particle->get_radius();
@@ -88,12 +88,19 @@ void spp::update() {
   glm::vec3 position = m_world->position+start+offset; 
   glm::vec3 particle_start = (m_world->distance+(m_spring->length-m_spring->extension))*t[3];
   // calculate displacement parallel to the plane
-  float end_time = ((float)M_PI/2)/sqrt(m_spring->elasticity/(m_world->mass*m_spring->length)); 
+  float n = (m_spring->length/m_spring->elasticity)*(m_spring->elasticity+m_world->force-m_particle->mass*m_world->gravity*sin(m_plane->rotation));
+  float p = m_spring->length-extension-n;
+  float z = sqrt(m_spring->elasticity/(m_particle->mass*m_spring->length));
+  float u = m_world->u_velocity;
 
-  float r = m_spring->length-extension*cos(sqrt(m_spring->elasticity/(m_world->mass*m_spring->length))*get_time());
+  float r = p*cos(z*get_time())+u*sin(z*get_time())+n; 
+  float end_time = (asin((p+extension)/sqrt(p*p+u*u)) - atan(p/u))/z;
+
   m_spring->extension = m_spring->length-r;
   if (get_time() > end_time) {
-    r = sqrt((m_spring->elasticity*extension*extension)/(m_world->mass*m_spring->length))*get_time()+m_spring->length-extension;
+    float v = -z*p*sin(z*end_time)+z*u*cos(z*end_time); 
+    float a = (m_world->force-m_particle->mass*m_world->gravity*sin(m_plane->rotation))/m_particle->mass;
+    r = (a/2.0f)*get_time()*get_time() + (v-end_time*a)*get_time() + m_spring->length - end_time*end_time*a/2.0f - end_time*(v-end_time*a);
   }
   m_particle->position = position+(glm::normalize(start)*r)*scalar;
 }

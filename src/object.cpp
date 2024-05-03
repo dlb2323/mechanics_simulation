@@ -229,7 +229,6 @@ void world::show() const {
   ImGui::InputFloat("time scale", (float*)&time_scale, 1.0f, 10.0f);
   if (ImGui::InputFloat("x", (float*)&distance, 1.0f, 10.0f))
     reset_simulation((GUIitem*)this);
-  ImGui::InputFloat("m", (float*)&mass, 0.0f, 10.0f);
   ImGui::InputFloat("g", (float*)&gravity, 0.0f, 10.0f);
   ImGui::InputFloat("f", (float*)&force, 0.0f, 10.0f);
   ImGui::InputFloat("u", (float*)&u_velocity, 0.0f, 10.0f);
@@ -396,6 +395,7 @@ glm::mat4 particle::model_matrix() const {
 
 
 void particle::show() const {
+  ImGui::InputFloat("mass", (float*)&mass, 0.0f, 10.0f);
   ImGui::SliderFloat("scale", (float *)&m_scale, 0.0f, 30.0f);
     (*m_value_modified)(callback_node);
 }
