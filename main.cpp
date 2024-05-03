@@ -3,7 +3,6 @@
 #include <chrono>
 #include <iostream>
 #define GLFW_INCLUDE_NONE
-#define DRAW_WIREFRAME
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 
@@ -75,6 +74,9 @@ int main() {
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_STENCIL_TEST);
+  glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 #ifdef DRAW_WIREFRAME
   /* set drawing to wireframe mode */
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -125,10 +127,13 @@ int main() {
     ImGui::ShowDemoWindow(); // Show demo window! :)
     GUI::show(env);
 
+    // update
     env.update(delta.get_elapsed_time());
     environment::current_camera.update();
+
+    // draw
     glClearColor(0.529, 0.808, 0.98, 0.7);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     env.draw();
 

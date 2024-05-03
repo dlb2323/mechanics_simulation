@@ -60,6 +60,7 @@ void environment::update(float delta) {}
 
 sphere *environment::create(std::string &name, unsigned int radius) {
   sphere *n = new sphere(name, &sphere_mesh, radius);
+  select(n);  
   objects.push_back(n);
   // messy
   return n;
@@ -68,11 +69,19 @@ sphere *environment::create(std::string &name, unsigned int radius) {
 void environment::draw() {
   int width, height;
   glfwGetFramebufferSize(window, &width, &height);
+  GLFWmonitor* monitor = glfwGetWindowMonitor(window);
+  if (monitor) {
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    width = mode->width;
+    height = mode->height;
+  }
   proj =
       glm::perspective((float)(M_PI / 4), (float)width / height, 0.1f, 300.0f);
-  // draw
+  // shift centre
+  float of = (float)(((500.0 + (width-500.0)/2.0)-width/2.0)/(width/2.0));
+  glm::mat4 offset = glm::translate(glm::mat4(1.0f), glm::vec3(of, 0.0f, 0.0f));
   glm::mat4 view = environment::current_camera.get_view_matrix();
-  glm::mat4 vp_matrix = proj * view;
+  glm::mat4 vp_matrix = offset * proj * view;
 
   for (int i = 0; i < objects.size(); i++) {
     objects[i]->draw(vp_matrix);
