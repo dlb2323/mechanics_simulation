@@ -13,11 +13,16 @@ class window {
 	}
 
 	void makeCurrent();
+	bool shouldClose();
 
 };
 
 void window::makeCurrent() {
 	glfwMakeContextCurrent(window_id);
+}
+
+bool window::shouldClose() {
+	return (bool)glfwWindowShouldClose(window_id);
 }
 
 int main() {
@@ -34,8 +39,9 @@ int main() {
 		// glfwSetCursorPosCallback(window, mouse_callback);
 	} */
 
-	std::string r;
-	std::cin >> r; 
+	while(!mainWindow.shouldClose()) {
+	    glfwPollEvents();
+	}
 
   	glfwTerminate();
   	exit(EXIT_SUCCESS);
