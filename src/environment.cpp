@@ -141,6 +141,7 @@ void environment::create(object* o) {
 void environment::remove(tree_node<object*>* node) {
   if (node->get_parent()) {
     if (node->get_parent()->get_data()->get_type_code() == 0)
+      DEBUG_TEXT("removing node from environment")
       static_cast<world*>(node->get_parent()->get_data())->child_removed(node->get_data());
   }
   tree_node<object*>::destroy(node);

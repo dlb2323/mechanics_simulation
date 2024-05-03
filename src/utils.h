@@ -1,7 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#define DEBUG
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 // debug output
 #ifdef DEBUG
 #include "stdio.h"

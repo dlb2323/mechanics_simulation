@@ -211,16 +211,22 @@ bool world::create_simulation() {
 
 void world::child_removed(object* child) {
   // update info 
+  DEBUG_TEXT("child removed")
   if (child == simulation_objects.pa)
     simulation_objects.pa = NULL;
   else if (child == simulation_objects.pl)
     simulation_objects.pl = NULL;
+  else if (child == simulation_objects.sp)
+    simulation_objects.sp = NULL;
 
-  if (current_simulation)
-    delete current_simulation;
+  if (current_simulation) {
+      delete current_simulation;
+      current_simulation = NULL;
+  }
   if (!create_simulation()) {
     current_simulation = NULL;
   }
+  DEBUG_TEXT("child removed from simulation context")
 }
 
 void world::show() const {
@@ -230,7 +236,6 @@ void world::show() const {
   if (ImGui::InputFloat("x", (float*)&distance, 1.0f, 10.0f))
     reset_simulation((GUIitem*)this);
   ImGui::InputFloat("g", (float*)&gravity, 0.0f, 10.0f);
-  ImGui::InputFloat("f", (float*)&force, 0.0f, 10.0f);
   ImGui::InputFloat("u", (float*)&u_velocity, 0.0f, 10.0f);
 }
 
@@ -373,7 +378,7 @@ void particle::gen_vertex_data(unsigned int nodes, mesh &particle_mesh) {
   glEnableVertexAttribArray(0);
   glBufferData(GL_ARRAY_BUFFER, data_locations * sizeof(float), data,
                GL_STATIC_DRAW);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertices * 6 * sizeof(int), tree,
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<unsigned long long>(vertices) * 6 * sizeof(int), tree,
                GL_STATIC_DRAW);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
 
@@ -395,6 +400,7 @@ glm::mat4 particle::model_matrix() const {
 
 
 void particle::show() const {
+  ImGui::InputFloat("force", (float*)&force, 0.0f, 10.0f);
   ImGui::InputFloat("mass", (float*)&mass, 0.0f, 10.0f);
 }
 

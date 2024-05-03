@@ -1,4 +1,5 @@
 # build directory
+vs/
 target/
 #clangd
 .cache/

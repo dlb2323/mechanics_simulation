@@ -34,7 +34,7 @@ protected:
   float m_time_scale;
   float get_time() { return m_time.get_elapsed_time()*m_time_scale; };
 public:
-  simulation(world* world) : m_world(world) {}
+  simulation(world* world) : m_world(world), m_time_scale(1.0f) {}
   virtual ~simulation() {};
   virtual void reset() = 0;
   virtual void update() = 0;

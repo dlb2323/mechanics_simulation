@@ -10,6 +10,8 @@
 #include "shader.hpp"
 #include "simulation.hpp"
 #include "utils.h"
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 
 // linear interpolate between two vectors
@@ -140,7 +142,6 @@ public:
   float time_scale;
   float distance;
   float friction;
-  float force;
   float gravity;
   float u_velocity;
   world(std::string& name, float scale)
@@ -148,7 +149,6 @@ public:
         time_scale(1.0f),
         distance(1.0f),
         friction(0.0f),
-        force(1.0f),
         gravity(9.8f),
         u_velocity(0.0f)
   { simulation_objects = {NULL, NULL, NULL};
@@ -196,10 +196,11 @@ public:
 class particle : public object {
   glm::mat4 model_matrix() const override;
 public:
+  float force;
   float mass;
   static mesh* particle_mesh;
   particle(std::string &name, float scale)
-      : object(name, particle_mesh, scale, glm::vec3(0.0f, 0.0f, 1.0f)), mass(1.0f) {}
+      : object(name, particle_mesh, scale, glm::vec3(0.0f, 0.0f, 1.0f)), mass(1.0f), force(0.0f) {}
   static void gen_vertex_data(unsigned int nodes, mesh &mesh);
   // get radius size
   float get_radius() const { return m_scale; };
@@ -229,10 +230,11 @@ public:
   static mesh* spring_mesh;
   static mesh* spring_mesh_highlight;
   spring(std::string& name, float scale)
-      : object(name, spring_mesh, scale, glm::vec3(0.667f, 0.663f, 0.678f)), 
-    extension(0.0f), 
+      : object(name, spring_mesh, scale, glm::vec3(0.667f, 0.663f, 0.678f)),
+     rotation(0.0f),
+    extension(0.5f), 
     length(1.0f),
-    elasticity(1.0f)
+    elasticity(9.8f)
   {}
   static void gen_vertex_data(const int coils, const int nodes, const float coil_width, const float thickness, mesh &mesh);
   void show() const override;
