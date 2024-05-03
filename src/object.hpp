@@ -62,9 +62,12 @@ class object : public GUIitem {
   const double m_total_time = 0.45;
   enum MODE { STILL, ACTIVE };
   object::MODE m_mode;
+
 protected:
   mesh *m_mesh;
   float m_scale;
+
+  virtual glm::mat4 model_matrix() const = 0;
 public:
   glm::vec3 position;
 
@@ -75,19 +78,21 @@ public:
       : GUIitem(name), m_mesh(mesh), m_scale(scale), m_mode(MODE::STILL), position(0.0f) {}
 
   void set_shader(shader *shader) const { m_mesh->set_shader(shader); };
-  virtual void draw(glm::mat4 &vp_matrix) const = 0; 
-  virtual void draw(glm::mat4 &vp_matrix, float scale) const = 0;
+  virtual void draw(glm::mat4 &vp_matrix) const; 
+  virtual void draw(glm::mat4 &vp_matrix, float scale) const;
   virtual void update(float delta);
   void select() { selected = true; };
   void deselect() { selected = false; };
-  void move_to(glm::vec3& location) {
+  void move_to(glm::vec3 location) {
     m_timestamp.begin();
+    m_start = position;
     m_end = location;
     m_mode = MODE::ACTIVE;
   };
 };
 
 class world : public object {
+  glm::mat4 model_matrix() const override;
 public:
   float friction;
   float distance;
@@ -102,18 +107,18 @@ public:
 };
 
 class plane : public object {
+  glm::mat4 model_matrix() const override;
 public:
   float rotation;
   static mesh* plane_mesh;
   plane(std::string& name, float scale)
       : object(name, plane_mesh, scale), rotation(0.0f) {}
-  static void gen_vertex_data(mesh &plane_mesh);
-  void draw(glm::mat4 &vp_matrix) const override;
-  void draw(glm::mat4 &vp_matrix, float scale) const override;
+  static void gen_vertex_data(mesh &mesh);
   void show() const override;
 };
 
 class particle : public object {
+  glm::mat4 model_matrix() const override;
 public:
   static mesh* particle_mesh;
   particle(std::string &name, float scale)
@@ -122,18 +127,14 @@ public:
   float get_radius() const { return m_scale; };
 
   void update(float delta) override;
-
-  void draw(glm::mat4 &vp_matrix) const override;
-  void draw(glm::mat4 &vp_matrix, float scale) const override;
   void show() const override;
 };
 
 class point : public object {
+  glm::mat4 model_matrix() const override;
 public:
   point(std::string& name, float scale)
       : object(name, particle::particle_mesh, scale) {}
-  void draw(glm::mat4 &vp_matrix) const override;
-  void draw(glm::mat4 &vp_matrix, float scale) const override;
   void show() const override;
 };
 
