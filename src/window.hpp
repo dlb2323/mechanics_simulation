@@ -24,6 +24,7 @@ class window {
 	void makeCurrent();
 	bool shouldClose();
 	void swapBuffers();
+	GLFWwindow* getWindow();
 
 
 };

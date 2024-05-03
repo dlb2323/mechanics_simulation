@@ -60,6 +60,10 @@ int main() {
 	shader Shader;
 
 	while(!mainWindow.shouldClose()) {
+	    if (glfwGetKey(mainWindow.getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+	      glfwSetWindowShouldClose(mainWindow.getWindow(), GLFW_TRUE);
+	    }
+
 	    glClearColor(0.2, 0.3, 0.3, 1.0);	
 	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	    mainWindow.swapBuffers();
