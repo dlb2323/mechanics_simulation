@@ -24,9 +24,12 @@ class camera {
   glm::vec3 m_focus_point;
   glm::vec3 *m_p_target;
   timestamp m_timestamp;
+
   // time taken to reach destination position
   const double m_total_time = 0.5;
   camera::MODE m_mode;
+
+  float m_zoom = 8.0f;
 
 public:
   // zoom level
@@ -40,13 +43,14 @@ public:
   void track(glm::vec3 *const target);
 
   void update();
-
+  
+  glm::vec3 get_position() { return m_position; };
   // generate view matrix for draw phase
   glm::mat4 get_view_matrix() const {
     glm::mat4 view(1.0f);
     // m_position holds the position of the camera's focus
     // offset from this location and scale by zoom level
-    glm::vec3 position = m_position + glm::vec3(0, 5, -10) * zoom;
+    glm::vec3 position = m_position + glm::vec3(0, 5, -10) * m_zoom;
     // transform to focus on the target position
     view = glm::lookAt(position, m_position, glm::vec3(0.0f, 1.0f, 0.0f));
     return view;
@@ -79,6 +83,8 @@ public:
   void update(float delta);
   void draw();
   void create(object* object);
+  void remove(tree_node<object*>* object);
+  void simulation_start();
   bool is_simulation_legal();
 
   // pass in node to select

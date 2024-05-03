@@ -1,7 +1,11 @@
 #include "gui.hpp"
+#include "glm/common.hpp"
 #include "object.hpp"
 #include "environment.hpp"
 #include <string>
+
+#define DEBUG
+#include "utils.h"
 
 GUI::STATE GUI::state;
 
@@ -16,7 +20,11 @@ static object * create_point(std::string& name) {
 }
 
 static object * create_plane(std::string& name) {
- return new plane(name, 30); 
+ return new plane(name, 80); 
+}
+
+static object * create_world(std::string& name) {
+ return new world(name, 3); 
 }
 
 // show the main gui tree
@@ -67,9 +75,10 @@ void GUI::show(environment& env) {
     height = mode->height;
   }
   // set window position
+  int window_width = 500;
   const ImGuiViewport *main_viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-  ImGui::SetNextWindowSize(ImVec2(500, height), ImGuiCond_Always);
+  ImGui::SetNextWindowSize(ImVec2(window_width, height), ImGuiCond_Always);
 
   // Main body of the window starts here.
   if (!ImGui::Begin("Mechanics Simulation", NULL, window_flags)) {
@@ -81,22 +90,34 @@ void GUI::show(environment& env) {
   // simulation start button
   // button text reflects gui state
   // activates only if there is a legal simulation
-  if (ImGui::Button((GUI::state == GUI::EDIT ? "Start" : "Stop"), ImVec2(100, 30)) && env.is_simulation_legal()) {
+  if (ImGui::Button((GUI::state == GUI::EDIT ? "Start" : "Stop"), ImVec2(100, 30))) {
+      DEBUG_TEXT("start simulation button clicked")
       // update gui state
-      GUI::state = GUI::state == GUI::EDIT ? GUI::SIMULATE : GUI::EDIT;
-      if (GUI::state == GUI::SIMULATE) {
+      if (env.is_simulation_legal() && GUI::state == GUI::EDIT) {
+         GUI::state = GUI::SIMULATE;
         // start simulation if in simulation state
+        // deselect any selections
         env.simulation_start();
-      }
+        env.deselect();
+      } else {
+      GUI::state = GUI::EDIT;
+    }
   }
   if (GUI::state == GUI::SIMULATE) {
     ImGui::SameLine(120.0f);
     ImGui::Text("Simulating, GUI locked");
   }
 
-  // camera zoom slider
-  ImGui::SliderFloat("zoom", &environment::current_camera.zoom,
-                     0.0f, 20.0f, "%.4f");
+  auto io = ImGui::GetIO();
+  static struct { float x; float y; } last_xy;
+  // scroll to zoom
+  if (io.MousePos.x > window_width) {
+    env.current_camera.zoom += io.MouseWheel*0.7f;
+    if (env.current_camera.zoom < 0)
+      env.current_camera.zoom = 0;
+    if (env.current_camera.zoom > 200.0f)
+      env.current_camera.zoom = 200.0f;
+  }
 
   // object spawn tabs
   ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
@@ -106,11 +127,16 @@ void GUI::show(environment& env) {
       auto tab_item = [](environment& env, std::string name,object* (*create_object)(std::string&)) {
         if (ImGui::BeginTabItem(name.c_str()))
         {
-            ImGui::Text((std::string("create ") + name).c_str());
+            ImGui::Text((std::string("press enter to create ") + name).c_str());
             {
-              static char input[128] = "A";
-              ImGui::InputText(" ", input, IM_ARRAYSIZE(input));
-              std::string s_input(input);
+              bool spawn = false;
+              static char buf1[64];
+              if (ImGui::InputText(" ", buf1, 64, ImGuiInputTextFlags_EnterReturnsTrue)) {
+                spawn = true; 
+              }
+              // static char input[128] = "A";
+              // ImGui::InputText(" ", input, IM_ARRAYSIZE(input));
+              std::string s_input(buf1);
               // find nodes with duplicate names
               bool match = false;
               tree_node<object*>* node = env.objects;
@@ -135,7 +161,7 @@ void GUI::show(environment& env) {
               // create 'count' objects and add them to gui tree at 'node'
               // used to spawn multiple objects in one command
               // does not activate while simulating
-              if (ImGui::Button((std::string("create ") + name).c_str()) && GUI::state != GUI::SIMULATE) {
+              if (spawn && GUI::state != GUI::SIMULATE) {
                 for (int i = 0; i < count; i++) {
                   std::string s_alt = s_input;
                   if (i != 0)
@@ -150,10 +176,11 @@ void GUI::show(environment& env) {
               // does not activate while simulating
               if (ImGui::Button("remove object") && GUI::state != GUI::SIMULATE) {
                 auto node = env.get_selection();
-                if (node && node->get_data()->get_name() != "world") {
+                if (node && node->get_data()->get_name() != "root") {
                   // cannot delete root node world 
+                  DEBUG_TEXT("removing node") 
                   env.deselect(true);
-                  tree_node<object*>::destroy(node);
+                  env.remove(node);
                 }
               }
             }
@@ -164,7 +191,7 @@ void GUI::show(environment& env) {
     // dynamically generate tab items for each object class
     // links creation functions
     tab_item(env, "particle", create_particle);
-    tab_item(env, "point", create_point);
+    tab_item(env, "world", create_world);
     tab_item(env, "plane", create_plane);
     ImGui::EndTabBar();
   }
@@ -181,16 +208,16 @@ void GUI::show(environment& env) {
       ImGui::EndChild();
   } else {
     // in gui state simulate, calculate and show simulation data
-    float a = (env.subjects.w->force-env.subjects.w->mass*env.subjects.w->gravity*sin(env.subjects.pl->rotation))/env.subjects.w->mass;
-    float r = (
-      ((env.subjects.w->force - env.subjects.w->mass*env.subjects.w->gravity
-      *sin(env.subjects.pl->rotation)))
-      /2*env.subjects.w->mass)
-      *env.subjects.time.get_elapsed_time()*env.subjects.time.get_elapsed_time() 
-      + env.subjects.w->u_velocity*env.subjects.time.get_elapsed_time();
-    ImGui::Text((std::string("time elapsed: ") + std::to_string(env.subjects.time.get_elapsed_time())).c_str());
-    ImGui::Text((std::string("acceleration: ") + std::to_string(a)).c_str());
-    ImGui::Text((std::string("displacement: ") + std::to_string(r)).c_str());
+    // float a = (env.subjects.w->force-env.subjects.w->mass*env.subjects.w->gravity*sin(env.subjects.pl->rotation))/env.subjects.w->mass;
+    // float r = (
+    //   ((env.subjects.w->force - env.subjects.w->mass*env.subjects.w->gravity
+    //   *sin(env.subjects.pl->rotation)))
+    //   /2*env.subjects.w->mass)
+    //   *env.subjects.time.get_elapsed_time()*env.subjects.time.get_elapsed_time() 
+    //   + env.subjects.w->u_velocity*env.subjects.time.get_elapsed_time();
+    // ImGui::Text((std::string("time elapsed: ") + std::to_string(env.subjects.time.get_elapsed_time())).c_str());
+    // ImGui::Text((std::string("acceleration: ") + std::to_string(a)).c_str());
+    // ImGui::Text((std::string("displacement: ") + std::to_string(r)).c_str());
   }
 
   ImGui::Spacing();

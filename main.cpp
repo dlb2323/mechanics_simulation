@@ -1,4 +1,3 @@
-#include <iostream>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
@@ -11,6 +10,7 @@
 #include "backends/imgui_impl_opengl3.h"
 #include "imgui.h"
 
+#include "utils.h"
 #include "src/environment.hpp"
 #include "src/gui.hpp"
 #include "tree.hpp"
@@ -149,6 +149,7 @@ int main() {
   plane::plane_mesh = &plane_mesh;
 
   // create simulation environment
+  DEBUG_TEXT("creating simulation environment")
   environment env(window);
 
   // initialise delta timestamp
