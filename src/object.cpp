@@ -385,18 +385,76 @@ void particle::show() const {
 
 // spring
 mesh* spring::spring_mesh;
+mesh* spring::spring_mesh_highlight;
+float spring::coil_width;
+int spring::coils;
 
 glm::mat4 spring::model_matrix() const {
-  return glm::mat4();
+  glm::mat4 model = glm::mat4(1.0f);
+  float length_unit = coil_width*coils;
+  float current_length = length-extension;
+  model = glm::translate(model, position);
+  model = glm::rotate(model, (float)glfwGetTime()/6, glm::vec3(0.0f, 1.0f, 0.0f));
+  model = glm::scale(model, glm::vec3(1.0f, current_length, 1.0f));
+  model = glm::scale(model, glm::vec3(1.0f)*m_scale);
+  model = glm::translate(model, glm::vec3(0.0f, length_unit/2, 0.0f));
+  return model;
 }
 
-void spring::gen_vertex_data(unsigned int nodes, float coil_width, mesh &mesh) {
-  int data_locations = 4*3;
-  // vertices form a square in 2d space
-  float* data = new float[data_locations];
+void spring::gen_vertex_data(const int coils, const int nodes, const float coil_width, float thickness, mesh &mesh) {
+  int data_locations = 3*nodes*coils*3;
 
-  int vertices = 6;
+  float* data = new float[data_locations];
+  float* d_p = data;
+
+  // generate coil
+  const float step_z = coil_width/(float)nodes;
+  const float twist = M_PI/8;
+
+  for (int i = 0; i < 3; i++) {
+    float z_offset = sin(2*i*M_PI/3+twist)*thickness*0.1;
+    float y_offset = cos(2*i*M_PI/3+twist)*thickness*0.1 - coil_width*coils/2.0f;
+    for (int j = 0; j < nodes*coils; j++) {
+      *d_p++ = sin(2*M_PI*j/nodes); // x 
+      *d_p++ = j*step_z+y_offset;   // y
+      *d_p++ = cos(2*M_PI*j/nodes)+z_offset; // z
+    }
+  }
+
+  int vertices = 18*(nodes*coils-1)+6;
   int* tree = new int[vertices];
+  int* t_p = tree;
+  int end = nodes*coils;
+  for (int i = 0; i < end-1; i++) {
+    *t_p++ = i; 
+    *t_p++ = end+i; 
+    *t_p++ = end+i+1; 
+    *t_p++ = i; 
+    *t_p++ = i+1; 
+    *t_p++ = end+i+1; 
+    //
+    *t_p++ = i; 
+    *t_p++ = 2*end+i; 
+    *t_p++ = 2*end+i+1; 
+    *t_p++ = i; 
+    *t_p++ = i+1; 
+    *t_p++ = 2*end+i+1; 
+    //
+    *t_p++ = end+i; 
+    *t_p++ = end+i+1; 
+    *t_p++ = 2*end+i+1; 
+    *t_p++ = end+i; 
+    *t_p++ = 2*end+i; 
+    *t_p++ = 2*end+i+1; 
+  }
+  // base and top
+  *t_p++ = 0;
+  *t_p++ = end;
+  *t_p++ = 2*end;
+  *t_p++ = end-1;
+  *t_p++ = 2*end-1;
+  *t_p++ = 3*end-1;
+
 
   // opengl bind vertex buffers for writing
   mesh.write_begin();
@@ -418,7 +476,26 @@ void spring::gen_vertex_data(unsigned int nodes, float coil_width, mesh &mesh) {
   mesh.set_elements(vertices);
 }
 
+// additional draw function used to draw outlines
+void spring::draw(glm::mat4& vp_matrix, float scale) const {
+    // swap out shader for single colour
+    spring::spring_mesh_highlight->bind();
+
+    glm::mat4 model = model_matrix();
+    glm::mat4 mvp = vp_matrix * model;
+    glUniformMatrix4fv(spring::spring_mesh_highlight->get_shader()->mvp_location(), 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniform3fv(spring::spring_mesh_highlight->get_shader()->colour_location(), 1, glm::value_ptr(m_colour));
+    glUniform1f(spring::spring_mesh_highlight->get_shader()->time_location(), (float)glfwGetTime());
+    spring::spring_mesh_highlight->draw();
+    spring::spring_mesh_highlight->unbind();
+    // return to original shader
+}
+
 void spring::show() const {
-  if (ImGui::InputFloat("extension", (float*)&m_extension))
+  if (ImGui::SliderFloat("extension", (float*)&extension, 0.0f, length))
+    (*m_value_modified)(callback_node);
+  if (ImGui::SliderFloat("length", (float*)&length, 0.0f, 20.0f))
+    (*m_value_modified)(callback_node);
+  if (ImGui::InputFloat("scale", (float*)&m_scale))
     (*m_value_modified)(callback_node);
 }

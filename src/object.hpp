@@ -74,11 +74,11 @@ class object : public GUIitem {
   enum MODE { STILL, ACTIVE };
   object::MODE m_mode;
   // colour mod
-  glm::fvec3 m_colour;
 
 protected:
   mesh *m_mesh;
   float m_scale;
+  glm::fvec3 m_colour;
 
   // pure function to pass custom object transform matrix to the draw call
   virtual glm::mat4 model_matrix() const = 0;
@@ -212,15 +212,20 @@ public:
 };
 
 class spring : public object {
-  float m_extension;
   glm::mat4 model_matrix() const override;
 public:
+  float length;
+  float extension;
   float rotation;
+  static float coil_width;
+  static int coils;
   static mesh* spring_mesh;
+  static mesh* spring_mesh_highlight;
   spring(std::string& name, float scale)
-      : object(name, spring_mesh, scale), m_extension(0.0f) {}
-  static void gen_vertex_data(unsigned int nodes, float coil_width, mesh &mesh);
+      : object(name, spring_mesh, scale), extension(0.0f), length(1.0f) {}
+  static void gen_vertex_data(const int coils, const int nodes, const float coil_width, const float thickness, mesh &mesh);
   void show() const override;
+  void draw(glm::mat4 &vp_matrix, float scale) const override;
   int get_type_code() const override { return 4; };
 };
 
