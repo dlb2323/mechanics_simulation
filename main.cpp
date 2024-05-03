@@ -41,8 +41,6 @@ void gen_sphere(unsigned int nodes) {
   delete[] data;
 }
 
-
-
 int main() {
 	if (!glfwInit())
 		exit(EXIT_FAILURE);
