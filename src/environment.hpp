@@ -39,6 +39,9 @@ public:
     glm::vec3 point(0.0f);
     focus(point);
   }
+  void snap_to(const glm::vec3& point) {
+      m_position = point;
+  }
   void focus(const glm::vec3 &point);
   void track(glm::vec3 *const target);
 

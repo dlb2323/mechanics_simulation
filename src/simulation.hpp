@@ -26,7 +26,7 @@ public:
 
 // define struct to hold simulation data
 // declare simulation struct
-// blank simulation base class, does nothing
+// blank simulation interface to inherit
 class simulation {
 protected:
   world* m_world;
@@ -65,6 +65,20 @@ public:
   void update() override;
   void start() override;
   void end() override;
+};
+
+class ppp : public simulation {
+    float extension;
+    spring* m_spring;
+    particle* m_particle1;
+    particle* m_particle2;
+    plane* m_plane;
+public:
+    ppp(world* world, particle* particle1, particle* particle2, plane* plane);
+    void reset() override;
+    void update() override;
+    void start() override;
+    void end() override;
 };
 
 

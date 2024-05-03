@@ -168,11 +168,16 @@ void world::child_added(object* child) {
       break;
     }
     case 3: {
-      if (!simulation_objects.pa) {
-        simulation_objects.pa = static_cast<particle*>(child);
+      if (!simulation_objects.pa1) {
+        simulation_objects.pa1 = static_cast<particle*>(child);
         child->set_modified_callback(static_cast<void (*)(GUIitem*)>(&world::reset_simulation));
         child->set_callback_node(this);
         DEBUG_TEXT("particle added to simulation state")
+      } else if (!simulation_objects.pa2) {
+          simulation_objects.pa2 = static_cast<particle*>(child);
+          child->set_modified_callback(static_cast<void (*)(GUIitem*)>(&world::reset_simulation));
+          child->set_callback_node(this);
+          DEBUG_TEXT("particle added to simulation state")
       }
       break;
     }
@@ -193,16 +198,27 @@ void world::child_added(object* child) {
 }
 
 bool world::create_simulation() {
-  if (simulation_objects.pa && simulation_objects.pl && simulation_objects.sp) {
+  if (simulation_objects.pa1 && simulation_objects.pl && simulation_objects.sp) {
     DEBUG_TEXT("simulation state set to spring, particle and plane")
-    if (current_simulation)
-      delete current_simulation;
-    current_simulation = new spp(this, simulation_objects.pa, simulation_objects.pl, simulation_objects.sp);
-  } else if (simulation_objects.pa && simulation_objects.pl) {
-    DEBUG_TEXT("simulation state set to particle and plane")
-    if (current_simulation)
-      delete current_simulation;
-    current_simulation = new pp(this, simulation_objects.pa, simulation_objects.pl);
+        if (current_simulation) {
+            delete current_simulation;
+            current_simulation = NULL;
+        }
+    current_simulation = new spp(this, simulation_objects.pa1, simulation_objects.pl, simulation_objects.sp);
+  } else if (simulation_objects.pa1 && simulation_objects.pa2 && simulation_objects.pl) {
+    DEBUG_TEXT("simulation state set to particle and particle and plane")
+        if (current_simulation) {
+            delete current_simulation;
+            current_simulation = NULL;
+        }
+    current_simulation = new ppp(this, simulation_objects.pa1, simulation_objects.pa2, simulation_objects.pl);
+  } else if (simulation_objects.pa1 && simulation_objects.pl) {
+      DEBUG_TEXT("simulation state set to particle and plane")
+          if (current_simulation) {
+              delete current_simulation;
+              current_simulation = NULL;
+          }
+      current_simulation = new pp(this, simulation_objects.pa1, simulation_objects.pl);
   } else {
     return false;
   }
@@ -212,8 +228,10 @@ bool world::create_simulation() {
 void world::child_removed(object* child) {
   // update info 
   DEBUG_TEXT("child removed")
-  if (child == simulation_objects.pa)
-    simulation_objects.pa = NULL;
+  if (child == simulation_objects.pa1)
+    simulation_objects.pa1 = NULL;
+  else if (child == simulation_objects.pa2)
+      simulation_objects.pa2 = NULL;
   else if (child == simulation_objects.pl)
     simulation_objects.pl = NULL;
   else if (child == simulation_objects.sp)
@@ -235,8 +253,8 @@ void world::show() const {
   ImGui::InputFloat("time scale", (float*)&time_scale, 1.0f, 10.0f);
   if (ImGui::InputFloat("x", (float*)&distance, 1.0f, 10.0f))
     reset_simulation((GUIitem*)this);
-  ImGui::InputFloat("g", (float*)&gravity, 0.0f, 10.0f);
-  ImGui::InputFloat("u", (float*)&u_velocity, 0.0f, 10.0f);
+  ImGui::InputFloat("gravity", (float*)&gravity, 0.0f, 10.0f);
+  ImGui::InputFloat("restitution", (float*)&restitution, 0.0f, 10.0f);
 }
 
 // point
@@ -402,6 +420,7 @@ glm::mat4 particle::model_matrix() const {
 void particle::show() const {
   ImGui::InputFloat("force", (float*)&force, 0.0f, 10.0f);
   ImGui::InputFloat("mass", (float*)&mass, 0.0f, 10.0f);
+  ImGui::InputFloat("initial velocity", (float*)&u_velocity, 0.0f, 10.0f);
 }
 
 // spring
