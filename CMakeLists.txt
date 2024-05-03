@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.27.1)
 set(PROJECT_NAME mechanics_simulation)
 # set(CMAKE_C_COMPILER Ninja)
-project(${PROJECT_NAME} CXX)
+project(${PROJECT_NAME} CXX C)
 add_executable(${PROJECT_NAME} main.cpp)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

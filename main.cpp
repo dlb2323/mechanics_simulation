@@ -1,4 +1,5 @@
 #include <iostream>
+#define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
 
@@ -48,7 +49,7 @@ int main() {
 		glfwTerminate();
 		return -1; // terminate glfw and exit system 
 	} else {
-		// glfwSetCursorPosCallback(window, mouse_callback);
+		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 	} 
 
 	while(!mainWindow.shouldClose()) {
