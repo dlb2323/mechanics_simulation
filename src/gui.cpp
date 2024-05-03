@@ -191,6 +191,3 @@ void GUI::help() {
 
 void GUI::particle_options(std::string name) {
 }
-
-// GUIitem
-shader* GUIitem::selected_shader;

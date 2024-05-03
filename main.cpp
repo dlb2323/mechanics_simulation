@@ -87,7 +87,7 @@ int main() {
 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_STENCIL_TEST);
-  glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+  glStencilFunc(GL_ALWAYS, 0, 0xFF);
   glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 #ifdef DRAW_WIREFRAME
   /* set drawing to wireframe mode */
@@ -148,6 +148,8 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     env.draw();
+    glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    glStencilMask(0xFF);
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

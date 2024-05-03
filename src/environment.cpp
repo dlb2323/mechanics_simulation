@@ -59,7 +59,7 @@ camera environment::current_camera;
 void environment::update(float delta) {}
 
 sphere *environment::create(std::string &name, unsigned int radius) {
-  sphere *n = new sphere(name, &sphere_mesh, radius);
+  sphere *n = new sphere(name, &sphere_mesh, radius, &single_colour);
   select(n);  
   objects.push_back(n);
   // messy
@@ -85,5 +85,10 @@ void environment::draw() {
 
   for (int i = 0; i < objects.size(); i++) {
     objects[i]->draw(vp_matrix);
+  }
+  if (selection) {
+      glDisable(GL_DEPTH_TEST);
+      selection->draw(vp_matrix, 1.1f);
+      glEnable(GL_DEPTH_TEST);
   }
 }
