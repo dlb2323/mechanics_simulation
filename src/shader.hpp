@@ -31,7 +31,7 @@ const unsigned int load_shader(std::string source_path,
   glGetShaderiv(shader_object, GL_COMPILE_STATUS, &success);
   if (!success) {
     glGetShaderInfoLog(shader_object, 512, NULL, info_log);
-    fprintf(stderr, "[ERROR] SHADER COMPILATION FAILED\n%s", info_log);
+    std::cerr << "[ERROR] SHADER COMPILATION FAILED\n" << info_log;
   }
   return shader_object;
 }
@@ -55,12 +55,15 @@ public:
     glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
     if (!success) {
       glGetProgramInfoLog(shader_program, 512, NULL, info_log);
-      fprintf(stderr, "[ERROR] LINKING SHADER PROGRAM FAILED\n%s", info_log);
+    std::cerr << "[ERROR] LINKING SHADER PROGRAM FAILED\n" << info_log;
     }
     /* delete used shader objects */
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
   }
+
+  void bind();
+  void unbind();
 };
 
 #endif // !SHADER_H
