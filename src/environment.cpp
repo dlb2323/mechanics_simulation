@@ -102,6 +102,12 @@ void environment::update(float delta) {
 void environment::simulation_start() {
   DEBUG_TEXT("simulation started")
   static_cast<world*>(selection->get_data())->start_simulation();
+  simulation = selection;
+}
+
+void environment::simulation_end() {
+  DEBUG_TEXT("simulation ended")
+  static_cast<world*>(simulation->get_data())->end_simulation();
 }
 
 // creates a new branch from an object and adds it to the tree 

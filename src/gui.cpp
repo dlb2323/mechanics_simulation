@@ -103,7 +103,8 @@ void GUI::show(environment& env) {
         // deselect any selections
         env.simulation_start();
         env.deselect();
-      } else {
+      } else if (GUI::state == GUI::SIMULATE) {
+        env.simulation_end();
       GUI::state = GUI::EDIT;
     }
   }

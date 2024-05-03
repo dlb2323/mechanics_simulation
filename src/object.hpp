@@ -137,7 +137,7 @@ class world : public object {
 public:
   static line_mesh* world_mesh;
   // simulation data
-  float elasticity;
+  float time_scale;
   float distance;
   float friction;
   float force;
@@ -146,19 +146,22 @@ public:
   float u_velocity;
   world(std::string& name, float scale)
       : object(name, world_mesh, scale), 
+        time_scale(1.0f),
         distance(1.0f),
         friction(0.0f),
         force(1.0f),
         gravity(9.8f),
         mass(1.0f),
-        u_velocity(0.0f),
-        elasticity(0.5f)
+        u_velocity(0.0f)
   { simulation_objects = {NULL, NULL, NULL};
     current_simulation = NULL; }
   ~world() { delete current_simulation; }
 
   void start_simulation() { DEBUG_TEXT("world initiating simulation");
     current_simulation->start(); };
+  void end_simulation() {
+    current_simulation->end();
+  }
   void child_added(object* child);
   void child_removed(object* child);
   bool create_simulation();
@@ -220,13 +223,18 @@ class spring : public object {
 public:
   float length;
   float extension;
+  float elasticity;
   float rotation;
   static float coil_width;
   static int coils;
   static mesh* spring_mesh;
   static mesh* spring_mesh_highlight;
   spring(std::string& name, float scale)
-      : object(name, spring_mesh, scale, glm::vec3(0.667f, 0.663f, 0.678f)), extension(0.0f), length(1.0f) {}
+      : object(name, spring_mesh, scale, glm::vec3(0.667f, 0.663f, 0.678f)), 
+    extension(0.0f), 
+    length(1.0f),
+    elasticity(1.0f)
+  {}
   static void gen_vertex_data(const int coils, const int nodes, const float coil_width, const float thickness, mesh &mesh);
   void show() const override;
   void draw(glm::mat4 &vp_matrix, float scale) const override;
