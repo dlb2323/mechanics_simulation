@@ -14,36 +14,136 @@
 #include "backends/imgui_impl_opengl3.h"
 #include "imgui.h"
 
-#include "src/shader.hpp"
-#include "src/sphere.hpp"
 #include "src/environment.hpp"
 #include "src/gui.hpp"
+#include "src/shader.hpp"
+#include "src/sphere.hpp"
 
 // gen sphere
 // gl stuff
 // abstraction
+template <class T> class tree_node;
 
+template <class T> class traversal_state {
+  typedef struct {
+    tree_node<T> *node_pointer;
+    int leaf_pointer;
+  } state;
+  state m_stack[128];
+  int m_stack_pointer;
+  T *m_item;
 
+public:
+  enum MODE { PREORDER, POSTORDER, INORDER };
+  const MODE mode;
+  traversal_state(MODE mode, tree_node<T> *root) : mode(mode) {
+    m_stack[0] = state{root, 0};
+  };
+  T *get_item() const { return m_item; };
+  bool next();
+};
 
+template <class T> class tree_node {
+  T *data;
+  bool lock = false;
+  std::vector<tree_node<T> *> children;
+
+  tree_node<T>(T *data) { tree_node<T>::data = data; }
+  ~tree_node<T>() {
+    if (data)
+      delete data;
+    for (int i = 0; i < children.size(); i++)
+      destroy(children[i]);
+  }
+
+public:
+  static tree_node<T> *create_new(T *data);
+  static int size(tree_node<T> *node);
+  static void destroy(tree_node<T> *node);
+  traversal_state<T>
+  get_traversal_state(typename traversal_state<T>::MODE mode);
+  void insert_node(tree_node<T> *node, int idx = -1);
+
+  T *get_data() const { return data; }
+  tree_node<T> *get_child(int idx) const { return children[idx]; }
+  unsigned int get_child_count() const { return children.size(); }
+};
+
+template <class T> bool traversal_state<T>::next() {
+  // preorder
+  T *node;
+  while (!node) {
+    if (m_stack[m_stack_pointer].node_pointer->get_child_count() == 0 ||
+        m_stack[m_stack_pointer].leaf_pointer >=
+            m_stack[m_stack_pointer].node_pointer->get_child_count()) {
+      if (m_stack_pointer == 0)
+        return false;
+      node = m_stack[m_stack_pointer--].node_pointer->get_data();
+    } else {
+      m_stack[m_stack_pointer + 1] =
+          state{m_stack[m_stack_pointer].node_pointer->get_child(
+                    m_stack[m_stack_pointer++].leaf_pointer++),
+                0};
+    }
+  }
+  return true;
+}
+
+template <class T>
+traversal_state<T>
+tree_node<T>::get_traversal_state(typename traversal_state<T>::MODE mode) {
+  return traversal_state(mode, this);
+};
+
+template <class T> void tree_node<T>::insert_node(tree_node<T> *node, int idx) {
+  if (idx >= 0 && idx <= children.size()) {
+    children.insert(children.begin() + idx, node);
+    return;
+  }
+  children.push_back(node);
+  return;
+}
+
+template <class T> tree_node<T> *tree_node<T>::create_new(T *data) {
+  return new tree_node<T>(data);
+}
+
+template <class T> int tree_node<T>::size(tree_node<T> *node) {
+  int size = 0;
+  if (node) {
+    size += 1;
+    for (int i = 0; i < node->children.size(); i++)
+      size += tree_node<T>::size(node->children[i]);
+  }
+  return size;
+}
+
+template <class T> void tree_node<T>::destroy(tree_node<T> *node) {
+  if (node->data)
+    delete node->data;
+  for (int i = 0; i < node->children.size(); i++)
+    tree_node<T>::destroy(node->children[i]);
+}
 
 void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id,
                             GLenum severity, GLsizei length,
                             const char *message, const void *userParam);
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_F11 && action == GLFW_PRESS) {
-      int width = 1200, height = 800;
-      GLFWmonitor* monitor = glfwGetWindowMonitor(window);
-      if (!monitor) {
-        const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-        width = mode->width;
-        height = mode->height;
-      }
-      glfwSetWindowMonitor(window, monitor ? NULL : glfwGetPrimaryMonitor(), 50, 50, width, height, 60);
+void key_callback(GLFWwindow *window, int key, int scancode, int action,
+                  int mods) {
+  if (key == GLFW_KEY_F11 && action == GLFW_PRESS) {
+    int width = 1200, height = 800;
+    GLFWmonitor *monitor = glfwGetWindowMonitor(window);
+    if (!monitor) {
+      const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+      width = mode->width;
+      height = mode->height;
     }
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-      glfwSetWindowShouldClose(window, GLFW_TRUE);
+    glfwSetWindowMonitor(window, monitor ? NULL : glfwGetPrimaryMonitor(), 50,
+                         50, width, height, 60);
+  }
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
 void error_callback(int error, const char *description) {
@@ -64,15 +164,16 @@ int main() {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
   glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
-  
+
   int width, height;
-  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+  GLFWmonitor *monitor = glfwGetPrimaryMonitor();
   if (monitor) {
-    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
     width = mode->width;
     height = mode->height;
   }
-  window = glfwCreateWindow(width, height, "mechanics_simulation", glfwGetPrimaryMonitor(), NULL);
+  window = glfwCreateWindow(width, height, "mechanics_simulation",
+                            glfwGetPrimaryMonitor(), NULL);
   glfwSetKeyCallback(window, key_callback);
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   glfwMakeContextCurrent(window);
@@ -126,6 +227,29 @@ int main() {
   ImGui::StyleColorsClassic();
   io.Fonts->AddFontFromFileTTF("res/IBMPlexMono-Light.otf", 20.0f);
   // end
+
+  std::string name = "test";
+  tree_node<GUIitem> *root = tree_node<GUIitem>::create_new(new GUIitem(name));
+  for (int i = 0; i < 12; i++)
+    root->insert_node(tree_node<GUIitem>::create_new(new GUIitem(name)));
+  std::cout << tree_node<GUIitem>::size(root) << std::endl;
+
+  int count = 0; 
+  tree_node<int>* rootl = tree_node<int>::create_new(new int(count++));
+  for (int i = 0; i < 4; i++)
+    rootl->insert_node(tree_node<int>::create_new(new int(count++)));
+  auto c1 = rootl->get_child(0);
+  for (int i = 0; i < 4; i++)
+    c1->insert_node(tree_node<int>::create_new(new int(count++)));
+  auto c2 = c1->get_child(0);
+  for (int i = 0; i < 4; i++)
+    c2->insert_node(tree_node<int>::create_new(new int(count++)));
+  auto t = rootl->get_traversal_state(traversal_state<int>::MODE::INORDER);
+  while(t.next())
+    std::cout << *t.get_item() << std::endl;
+  std::cin.get();
+
+
   environment env(window);
 
   timestamp delta;
@@ -149,7 +273,6 @@ int main() {
 
     env.draw();
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
-    glStencilMask(0xFF);
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -166,7 +289,6 @@ int main() {
   glfwTerminate();
   exit(EXIT_SUCCESS);
 }
-
 
 void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id,
                             GLenum severity, GLsizei length,
