@@ -75,12 +75,10 @@ void GUI::show(environment& env) {
             if (ImGui::Button("add particle")) {
               std::string input_string(input);
               bool match = false;
-              for (int i = 0; i < env.object_count(); i++) {
-                if (env.object_at(i)->get_name() == input_string) {
-                  match = true;
-                  break;
-                }
-              }
+              // auto itr = env.
+              //   if (env.object_at(i)->get_name() == input_string) {
+              //     match = true;
+              //     break;
               if (!match) {
                 std::string s_input(input);
                 sphere *p_sphere = env.create(s_input, 5);
@@ -129,53 +127,54 @@ void GUI::show(environment& env) {
     /// of the loop. May be a pointer to your own node type, etc.
     static int selection_mask = (1 << 2);
     int node_clicked = -1;
-    for (int i = 0; i < env.object_count(); i++) {
-      // Disable the default "open on single-click behavior" + set Selected
-      // flag according to our selection. To alter selection we use
-      // IsItemClicked() && !IsItemToggledOpen(), so clicking on an arrow
-      // doesn't alter selection.
-      ImGuiTreeNodeFlags node_flags = base_flags;
-      const bool is_selected = (selection_mask & (1 << i)) != 0;
-      if (is_selected)
-        node_flags |= ImGuiTreeNodeFlags_Selected;
-      if (i < env.object_count()) {
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        bool node_open = ImGui::TreeNodeEx((void *)(intptr_t)i, node_flags,
-                                           env.object_at(i)->get_name().c_str());
-        if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
-          node_clicked = i;
-        if (test_drag_and_drop && ImGui::BeginDragDropSource()) {
-          ImGui::SetDragDropPayload("_TREENODE", NULL, 0);
-          ImGui::Text("This is a drag and drop source");
-          ImGui::EndDragDropSource();
-        }
-        if (node_open) {
-          ImGui::Text("properties");
-          ImGui::TreePop();
-        }
-      }
-    }
-    if (node_clicked != -1) {
-      // Update selection state
-      // (process outside of tree loop to avoid visual inconsistencies during
-      // the clicking frame)
-      if (ImGui::GetIO().KeyCtrl)
-        selection_mask ^= (1 << node_clicked); // CTRL+click to toggle
-      else // if (!(selection_mask & (1 << node_clicked))) // Depending on
-           // selection behavior you want, may want to preserve selection when
-           // clicking on item that is part of the selection
-        selection_mask = (1 << node_clicked); // Click to single-select
-
-      if (env.object_at(node_clicked)) {
-        environment::current_camera.track(&env.object_at(node_clicked)->position);
-        env.select(env.object_at(node_clicked));
-      }
-      else
-        std::cout << "ERROR SELECTING NON-EXISTING OBJECT\n";
-    }
-    if (align_label_with_current_x_position)
-      ImGui::Indent(ImGui::GetTreeNodeToLabelSpacing());
-  }
+  //   for (int i = 0; i < env.object_count(); i++) {
+  //     // Disable the default "open on single-click behavior" + set Selected
+  //     // flag according to our selection. To alter selection we use
+  //     // IsItemClicked() && !IsItemToggledOpen(), so clicking on an arrow
+  //     // doesn't alter selection.
+  //     ImGuiTreeNodeFlags node_flags = base_flags;
+  //     const bool is_selected = (selection_mask & (1 << i)) != 0;
+  //     if (is_selected)
+  //       node_flags |= ImGuiTreeNodeFlags_Selected;
+  //     if (i < env.object_count()) {
+  //       ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+  //       bool node_open = ImGui::TreeNodeEx((void *)(intptr_t)i, node_flags,
+  //                                          env.object_at(i)->get_name().c_str());
+  //       if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+  //         node_clicked = i;
+  //       if (test_drag_and_drop && ImGui::BeginDragDropSource()) {
+  //         ImGui::SetDragDropPayload("_TREENODE", NULL, 0);
+  //         ImGui::Text("This is a drag and drop source");
+  //         ImGui::EndDragDropSource();
+  //       }
+  //       if (node_open) {
+  //         ImGui::Text("properties");
+  //         ImGui::TreePop();
+  //       }
+  //     }
+  //   }
+  //   if (node_clicked != -1) {
+  //     // Update selection state
+  //     // (process outside of tree loop to avoid visual inconsistencies during
+  //     // the clicking frame)
+  //     if (ImGui::GetIO().KeyCtrl)
+  //       selection_mask ^= (1 << node_clicked); // CTRL+click to toggle
+  //     else // if (!(selection_mask & (1 << node_clicked))) // Depending on
+  //          // selection behavior you want, may want to preserve selection when
+  //          // clicking on item that is part of the selection
+  //       selection_mask = (1 << node_clicked); // Click to single-select
+  //
+  //     if (env.object_at(node_clicked)) {
+  //       environment::current_camera.track(&env.object_at(node_clicked)->position);
+  //       env.select(env.object_at(node_clicked));
+  //     }
+  //     else
+  //       std::cout << "ERROR SELECTING NON-EXISTING OBJECT\n";
+  //   }
+  //   if (align_label_with_current_x_position)
+  //     ImGui::Indent(ImGui::GetTreeNodeToLabelSpacing());
+  // }
+}
 
   ImGui::Spacing();
 

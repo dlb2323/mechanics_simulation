@@ -7,5 +7,7 @@ set(SOURCE_FILES
     environment.cpp
     gui.hpp
     gui.cpp
+    tree.hpp
+    tree.cpp
     )
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCE_FILES})

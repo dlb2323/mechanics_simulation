@@ -1,4 +1,66 @@
 #include "environment.hpp"
+#include "tree.hpp"
+template <class T> bool traversal_state<T>::next() {
+    // preorder
+    T node = NULL;
+    while (!node) {
+        if (m_stack_pointer < 0)
+            return false;
+        if (m_stack[m_stack_pointer].node_pointer->get_child_count() == 0 ||
+            m_stack[m_stack_pointer].leaf_pointer >=
+            m_stack[m_stack_pointer].node_pointer->get_child_count()) {
+            node = m_stack[m_stack_pointer].node_pointer->get_data();
+            m_stack_pointer--;
+        }
+        else {
+            m_stack[m_stack_pointer + 1] =
+                state{ m_stack[m_stack_pointer].node_pointer->get_child(
+                          m_stack[m_stack_pointer].leaf_pointer),
+                      0 };
+            m_stack[m_stack_pointer].leaf_pointer++;
+            m_stack_pointer++;
+        }
+    }
+    m_item = node;
+    return true;
+}
+
+template <class T>
+traversal_state<T>
+tree_node<T>::get_traversal_state(typename traversal_state<T>::MODE mode) {
+    return traversal_state<T>(mode, this);
+};
+
+template <class T> void tree_node<T>::insert_node(tree_node<T>* node, int idx) {
+    if (idx >= 0 && idx <= children.size()) {
+        children.insert(children.begin() + idx, node);
+        return;
+    }
+    children.push_back(node);
+    return;
+}
+
+template <class T> tree_node<T>* tree_node<T>::create_new(T data) {
+    return new tree_node<T>(data);
+}
+
+template <class T> int tree_node<T>::size(tree_node<T>* node) {
+    int size = 0;
+    if (node) {
+        size += 1;
+        for (int i = 0; i < node->children.size(); i++)
+            size += tree_node<T>::size(node->children[i]);
+    }
+    return size;
+}
+
+template <class T> void tree_node<T>::destroy(tree_node<T>* node) {
+    if (node->data)
+        delete node->data;
+    for (int i = 0; i < node->children.size(); i++)
+        tree_node<T>::destroy(node->children[i]);
+    delete node;
+}
 
 glm::vec3 lerp(glm::vec3 x, glm::vec3 y, float t) {
   return x * (1.f - t) + y * t;
@@ -54,6 +116,22 @@ void camera::update() {
 }
 
 // environment
+environment::environment(GLFWwindow *window)
+    : window(window),
+      main_shader("vertex_shader.glsl", "fragment_shader.glsl"),
+      single_colour("vertex_shader.glsl", "single_colour_shader.glsl"),
+      sphere_mesh(&main_shader) {
+  objects = tree_node<object*>::create_new(NULL);
+  selection = NULL;
+  sphere::gen_vertex_data(120, sphere_mesh);
+}
+environment::~environment() {
+  auto traverse = objects->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
+  while(traverse.next())
+    delete traverse.get_item();
+  tree_node<object*>::destroy(objects);
+};
+
 camera environment::current_camera;
 
 void environment::update(float delta) {}
@@ -61,7 +139,7 @@ void environment::update(float delta) {}
 sphere *environment::create(std::string &name, unsigned int radius) {
   sphere *n = new sphere(name, &sphere_mesh, radius, &single_colour);
   select(n);  
-  objects.push_back(n);
+  objects->insert_node(tree_node<object*>::create_new((object*)n));
   // messy
   return n;
 }
@@ -83,9 +161,10 @@ void environment::draw() {
   glm::mat4 view = environment::current_camera.get_view_matrix();
   glm::mat4 vp_matrix = offset * proj * view;
 
-  for (int i = 0; i < objects.size(); i++) {
-    objects[i]->draw(vp_matrix);
-  }
+  auto itr = objects->get_traversal_state(traversal_state<object*>::MODE::PREORDER);
+  while(itr.next())
+    objects->get_data()->draw(vp_matrix);
+
   if (selection) {
       glDisable(GL_DEPTH_TEST);
       selection->draw(vp_matrix, 1.1f);
