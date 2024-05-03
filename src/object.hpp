@@ -129,6 +129,7 @@ class world : public object {
   struct {
     particle* pa;
     plane* pl;
+    spring* sp;
   } simulation_objects;
   glm::mat4 model_matrix() const override;
   simulation* current_simulation;
@@ -136,6 +137,7 @@ class world : public object {
 public:
   static line_mesh* world_mesh;
   // simulation data
+  float elasticity;
   float distance;
   float friction;
   float force;
@@ -149,8 +151,10 @@ public:
         force(1.0f),
         gravity(9.8f),
         mass(1.0f),
-        u_velocity(0.0f)
-  { simulation_objects = {NULL, NULL}; }
+        u_velocity(0.0f),
+        elasticity(0.5f)
+  { simulation_objects = {NULL, NULL};
+    current_simulation = NULL; }
   ~world() { delete current_simulation; }
 
   void start_simulation() { DEBUG_TEXT("world initiating simulation");
@@ -227,6 +231,7 @@ public:
   void show() const override;
   void draw(glm::mat4 &vp_matrix, float scale) const override;
   int get_type_code() const override { return 4; };
+  float get_scale() const { return m_scale; }
 };
 
 

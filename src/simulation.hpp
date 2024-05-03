@@ -10,6 +10,7 @@
 class world;
 class particle;
 class plane;
+class spring;
 // holds a point in time for reference
 class timestamp {
   std::chrono::time_point<std::chrono::system_clock> start;
@@ -50,10 +51,11 @@ public:
 };
 
 class spp : public simulation {
+  spring* m_spring;
   particle* m_particle;
   plane* m_plane;
 public:
-  spp(world* world, particle* particle, plane* plane);
+  spp(world* world, particle* particle, plane* plane, spring* spring);
   void reset() override;
   void update() override;
   void start() override;

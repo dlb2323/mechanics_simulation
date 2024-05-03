@@ -176,6 +176,15 @@ void world::child_added(object* child) {
       }
       break;
     }
+    case 4: {
+      if (!simulation_objects.sp) {
+        simulation_objects.sp = static_cast<spring*>(child);
+        child->set_modified_callback(static_cast<void (*)(GUIitem*)>(&world::reset_simulation));
+        child->set_callback_node(this);
+        DEBUG_TEXT("spring added to simulation state")
+      }
+      break;
+    }
     case 0:
     default:
     break;
@@ -184,8 +193,15 @@ void world::child_added(object* child) {
 }
 
 bool world::create_simulation() {
-  if (simulation_objects.pa && simulation_objects.pl) {
+  if (simulation_objects.pa && simulation_objects.pl && simulation_objects.sp) {
+    DEBUG_TEXT("simulation state set to spring, particle and plane")
+    if (current_simulation)
+      delete current_simulation;
+    current_simulation = new spp(this, simulation_objects.pa, simulation_objects.pl, simulation_objects.sp);
+  } else if (simulation_objects.pa && simulation_objects.pl) {
     DEBUG_TEXT("simulation state set to particle and plane")
+    if (current_simulation)
+      delete current_simulation;
     current_simulation = new pp(this, simulation_objects.pa, simulation_objects.pl);
   } else {
     return false;
@@ -212,6 +228,7 @@ void world::show() const {
   float old_distance = distance;
   if (ImGui::InputFloat("x", (float*)&distance, 1.0f, 10.0f))
     reset_simulation((GUIitem*)this);
+  ImGui::InputFloat("elasticity", (float*)&elasticity, 0.0f, 1.0f);
   ImGui::InputFloat("m", (float*)&mass, 0.0f, 10.0f);
   ImGui::InputFloat("g", (float*)&gravity, 0.0f, 10.0f);
   ImGui::InputFloat("f", (float*)&force, 0.0f, 10.0f);
@@ -394,9 +411,9 @@ glm::mat4 spring::model_matrix() const {
   float length_unit = coil_width*coils;
   float current_length = length-extension;
   model = glm::translate(model, position);
-  model = glm::rotate(model, (float)glfwGetTime()/6, glm::vec3(0.0f, 1.0f, 0.0f));
-  model = glm::scale(model, glm::vec3(1.0f, current_length, 1.0f));
+  model = glm::rotate(model, rotation-(float)M_PI/2.0f, glm::vec3(0.0f, 0.0f, -1.0f));
   model = glm::scale(model, glm::vec3(1.0f)*m_scale);
+  model = glm::scale(model, glm::vec3(1.0f, current_length, 1.0f));
   model = glm::translate(model, glm::vec3(0.0f, length_unit/2, 0.0f));
   return model;
 }
